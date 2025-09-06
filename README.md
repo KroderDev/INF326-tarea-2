@@ -30,5 +30,7 @@ Se requiere implementar un sistema que permita el desarrollo de la comunidad uni
 
 - [Descubrimiento de comunidades](.docs/Discovery.md)
 - [Calendario (Externo)](.docs/Calendar.md)
+- [Asistente](.docs/Asistente.md)
+- [Automatización](.docs/Automatización.md)
 
 ## Diagrama de arquitectura general
