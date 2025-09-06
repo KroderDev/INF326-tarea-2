@@ -28,6 +28,7 @@ Se requiere implementar un sistema que permita el desarrollo de la comunidad uni
 
 ## Módulos
 
+- [Autenticación de usuario](.docs/Auth.md)
 - [Descubrimiento de comunidades](.docs/Discovery.md)
 - [Calendario (Externo)](.docs/Calendar.md)
 - [Asistente](.docs/Asistente.md)
