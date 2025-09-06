@@ -1,13 +1,5 @@
 # Módulo: Descubrimiento de comunidades
 
-## Requerimientos
-
-* Buscar comunidades por texto, tags, campus, visibilidad y rango de tamaño.
-* Ordenar por actividad reciente, crecimiento de miembros, relevancia semántica y verificación.
-* Mostrar facetas (counts por tag/campus/visibilidad).
-* Endpoint para “Descubrir para mí”: usa datos del usuario como campus, carrera y tags de interés.
-* Auditoría básica de búsquedas (para métricas de producto).
-
 ## Diagrama de arquitectura
 
 ```mermaid
@@ -58,6 +50,14 @@ flowchart LR
   class APIGW outOfScope
 
 ```
+
+## Requerimientos
+
+* Buscar comunidades por texto, tags, campus, visibilidad y rango de tamaño.
+* Ordenar por actividad reciente, crecimiento de miembros, relevancia semántica y verificación.
+* Mostrar facetas (counts por tag/campus/visibilidad).
+* Endpoint para “Descubrir para mí”: usa datos del usuario como campus, carrera y tags de interés.
+* Auditoría básica de búsquedas (para métricas de producto).
 
 ## Diagrama de flujo de indexación
 
