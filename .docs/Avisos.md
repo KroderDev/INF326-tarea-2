@@ -1,4 +1,4 @@
-# Módulo: Chat
+# Módulo: Avisos
 
 ## Diagrama arquitectura
 
