@@ -1,4 +1,4 @@
-# Módulo: Asistente
+# Módulo: Chat
 
 ## Diagrama arquitectura
 
