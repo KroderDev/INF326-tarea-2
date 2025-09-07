@@ -30,9 +30,205 @@ Se requiere implementar un sistema que permita el desarrollo de la comunidad uni
 
 - [Autenticación de usuario](.docs/Auth.md)
 - [Descubrimiento de comunidades](.docs/Discovery.md)
+- [Comunidades](.docs/Comunidades.md)
 - [Calendario (Externo)](.docs/Calendar.md)
 - [Asistente](.docs/Asistente.md)
 - [Automatización](.docs/Automatización.md)
 - [Chat](.docs/Chat.md)
 - [Avisos](.docs/Avisos.md)
 ## Diagrama de arquitectura general
+
+### Vista rápida
+
+```mermaid
+---
+config:
+  look: classic
+  theme: neutral
+---
+flowchart LR
+  APP[Clientes]
+  APIGW[API Gateway]
+  AUTH[Auth]
+  CHAT[Chat]
+  AST[Asistente]
+  AUTO[Automatización]
+  COMM[Comunidades]
+  DISC[Discovery]
+  CAL[Calendario]
+  ADV[Avisos]
+  BUS[[Event Bus]]
+
+  APP --> APIGW
+  APIGW --> AUTH
+  APIGW --> CHAT
+  APIGW --> AST
+  APIGW --> AUTO
+  APIGW --> COMM
+  APIGW --> DISC
+  APIGW --> CAL
+  APIGW --> ADV
+
+  CHAT <--> AST
+  AST <---> BUS <---> AUTO
+  AUTO <---> CAL
+  COMM --> BUS --> DISC
+  ADV --> BUS --> AST
+  APP -. JWT .-> APIGW
+```
+
+
+> [!NOTE]
+> Para ver cada módulo en detalle, revisa su documento específico. [aquí](#módulos)
+
+---
+
+### Diagrama "casi" completo
+```mermaid
+---
+config:
+  look: classic
+  theme: redux-dark-colors
+---
+flowchart LR
+  classDef outOfScope stroke-dasharray: 5 5,opacity:0.7
+
+  subgraph Clients
+    APP[App Web/Móvil]
+  end
+
+  subgraph Shared Edge
+    APIGW[API Gateway\nAuth, Rate limit, Routing]
+  end
+
+  subgraph Identity
+    AUTH[Auth Service/API]
+    JW[(JWKS Cache)]
+    RBAC[(Roles/Permisos)]
+    IDP[Microsoft Entra ID]
+  end
+
+  subgraph Chat
+    CHAT[Chat Service]
+    CHIST[(Histórico mensajes)]
+    CCACHE[(Cache mensajes recientes)]
+  end
+
+  subgraph Assistant
+    AING[Ingress]
+    ACLF[Classifier]
+    ACTX[(Context Store)]
+  end
+
+  subgraph Automation
+    ORCH[Run Orchestrator]
+    WORK[Worker Pool]
+    FLOWS[(Flow Registry)]
+    STATE[(Run State)]
+    SCH[Scheduler]
+  end
+
+  subgraph Calendar
+    CALBFF[Calendar API BFF]
+    CALAPI[Calendar Integration API]
+    CMAP[(User-Provider Map)]
+    CTOK[(Token Store)]
+    ADP1[Adapter Google]
+    ADP2[Adapter Microsoft]
+    ADP3[Adapter CalDAV]
+  end
+
+  subgraph Discovery
+    DBFF[Discovery API BFF]
+    SAPI[Search API]
+    IDX[(Search Index)]
+    RANK[Ranking]
+  end
+
+  subgraph Communities
+    CAT[Community Catalog]
+    MEM[Membership]
+    ACT[Activity]
+    CAPI[Communities API]
+  end
+
+  subgraph Avisos
+    REC[Receiver]
+    TRA[Transmitter]
+    AHIST[(Avisos Store)]
+    ACACHE[(Recent Avisos)]
+  end
+
+  subgraph Infra
+    BUS[[Event Bus]]
+  end
+
+  %% Cliente y shared edge
+  APP -->|HTTPS| APIGW
+  APIGW -->|/chat/*| CHAT
+  APIGW -->|/discovery/*| DBFF
+  APIGW -->|/communities/*| CAPI
+  APIGW -->|/calendar/*| CALBFF
+  APIGW -->|/avisos/*| REC
+  APIGW -->|/auth/*| AUTH
+
+  %% Auth
+  AUTH -->|authorize/loginC| IDP
+  AUTH -->|tokens id/access| APP
+  APIGW -->|obtener JWKS| AUTH
+  AUTH --> JW
+  AUTH --- RBAC
+  class IDP outOfScope
+
+  %% Chat <-> Assistant
+  CHAT -- ChatMessageReceived --> AING
+  AING --> ACLF --> ACTX
+  ACLF -- AssistantCommandIssued --> BUS
+  BUS -- FlowOutputProduced --> AING
+  AING -- ChatSendRequest --> CHAT
+  CHAT -. membership/visibility .-> MEM
+
+  %% Automatización (orquestación)
+  BUS --> ORCH
+  SCH --> ORCH
+  ORCH --> WORK
+  WORK --> STATE
+  ORCH --> STATE
+  WORK -- FlowOutputProduced --> BUS
+
+  %% Calendar (integraciones externas)
+  CALBFF --> CALAPI
+  WORK -- CalendarCommand* --> CALAPI
+  CALAPI -- CalendarEvent* --> BUS
+  CALAPI --- CMAP
+  CALAPI --- CTOK
+  CALAPI --> ADP1
+  CALAPI --> ADP2
+  CALAPI --> ADP3
+  class ADP1,ADP2,ADP3 outOfScope
+
+  %% Discovery (búsqueda e indexación)
+  DBFF --> SAPI
+  SAPI --> IDX
+  RANK --> IDX
+  CAT -- Community* --> BUS
+  MEM -- Membership* --> BUS
+  ACT -- Activity* --> BUS
+  BUS -->|consume| SAPI
+  SAPI -->|update index| IDX
+
+  %% Avisos
+  REC --> AHIST
+  REC --> ACACHE
+  TRA --> ACACHE
+  APIGW --> TRA
+  TRA -- AssistantQueue --> BUS
+  BUS --> CHAT
+
+  %% Autorización transversal via JWT en APIGW
+  APP -. Authorization: Bearer .-> APIGW
+```
+
+> [!NOTE]
+> El diagrama muestra flujos principales entre módulos: Auth, Chat, Asistente, Automatización, Calendario, Comunidades, Descubrimiento y Avisos, junto al Event Bus y el API Gateway.
+> Componentes externos (IdP y proveedores de calendario) se marcan como fuera de alcance.
