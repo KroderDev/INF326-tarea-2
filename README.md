@@ -33,5 +33,6 @@ Se requiere implementar un sistema que permita el desarrollo de la comunidad uni
 - [Calendario (Externo)](.docs/Calendar.md)
 - [Asistente](.docs/Asistente.md)
 - [Automatización](.docs/Automatización.md)
-
+- [Chat](.docs/Chat.md)
+- [Avisos](.docs/Avisos.md)
 ## Diagrama de arquitectura general
