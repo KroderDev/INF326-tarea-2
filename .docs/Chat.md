@@ -32,7 +32,9 @@ flowchart LR
   ACM -->|Extract or enter| CACHE
   ACM -->|Enter| ASS
 ```
-
+>_La idea es tener una gestión lo más veloz posible, considerando que si o si se deben almacenar todas las conversaciones históricas de los chats. Partiendo de esa base se establecieron 3 puntos de almacenamiento para los chats._<br>
+_En primer lugar la cola, la cual tendrá los X días de los chats más utilizados, también almacenará si o si el mensaje persistente más reciente de los mismos. Segundo un almacenamiento que servirá de respaldo a esta, en la que tendrá las Y semanas más recientes de cada chat (podría cambiarse a un diseño según cantidad de mensajes). Y finalmente el almacenamiento más lento, debido a la cantidad de data que contempla, almacenará todas las conversaciones de todos los chats, así como también sus datos menos relevantes como descripción del chat, datos secundarios o mensajes persistentes históricos. En el caso de mensajes canalizados hacia el asistente personal, simplemente se pasará a su cola, generando un punto de comunicación entre ambos módulos._<br>
+_Para controlar los accesos a la información se agregó un controlador de accesos el cual dará la respuesta necesaria, extraída del punto de almacenamiento que corresponda (Debido a que almacenará la lógica de esa decisión)._
 ---
 
 ## Requerimientos
