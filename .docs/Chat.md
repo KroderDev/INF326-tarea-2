@@ -60,35 +60,34 @@ _Para controlar los accesos a la información se agregó un controlador de acces
 
 ### HTTP/RPC (sincrónico)
 
-- Registrar nuevo chat (puede ser de tipo autorizado o no): `GET /chat/new/{nombre}/{tipo}/{privacidad}/{autorización}`
+- Registrar nuevo chat: `POST /chat/new`
 	>nombre:Nombre del chat.<br>
-	tipo: Puede ser canal de difusión o comunidad.<br>
 	privacidad: Puede ser con acceso público o privado.<br>
 	autorización: Si el usuario que creó dicho grupo está autorizado o no.
 - Eliminar chat: `DELETE /chat/{id}`
 	>id: Identificador único del chat a eliminar.
-- Agregar Integrante al chat (en caso de ser autorizado): `POST /chat/{id}/member/{gmail}`
+- Agregar Integrante al chat (en caso de ser autorizado): `POST /chat/{id}/member/{user_id}`
 	>id: Identificador único del chat.<br>
 	gmail: Correo institucional del usuario a agregar.
-- Solicitar unirse a un determinado chat: `POST /chat/{id}/member/pending/{gmail}`
+- Solicitar unirse a un determinado chat: `POST /chat/{id}/member/pending/{user_id}`
 	>id: Identificador único del chat.<br>
 	gmail: Correo institucional del usuario solicitante.
-- 	Eliminar a estudiante de un chat: `DELETE /chat/{id}/member/{gmail}`
+- 	Eliminar a estudiante de un chat: `DELETE /chat/{id}/member/{user_id}`
 	>id: Identificador único del chat.<br>
 	gmail: Correo institucional del usuario.
-- 	Enviar mensaje a un chat determinado: `POST /chat/{id}/message/{gmail}/{mensaje}`
+- 	Enviar mensaje a un chat determinado: `POST /chat/{id}/message/{user_id}/{mensaje}`
 	>id: Identificador único del chat.<br>
 	gmail: Correo institucional del usuario.<br>
 	mensaje: Texto a enviar por el chat.
-- Consultar si hay elementos en la cola del chat (mensajes nuevos sin cargar todo): `GET /chat/{id}/message/{gmail}/{hora}`
+- Consultar si hay elementos en la cola del chat (mensajes nuevos sin cargar todo): `GET /chat/{id}/message/{user_id}/{hora}`
 	>id: Identificador único del chat.<br>
 	gmail: Correo institucional del usuario.<br>
 	hora: Fecha y hora de la última descarga de mensajes.
-- Crear mensajes persistentes en el chat: `POST /chat/{id}/persistent/{gmail}/{mensaje}`
+- Crear mensajes persistentes en el chat: `POST /chat/{id}/persistent/{user_id}/{mensaje}`
 	>id: Identificador único del chat.<br>
 	gmail: Correo institucional del usuario.<br>
 	mensaje: Texto a enviar por el chat.
-- Eliminar mensajes persistentes del chat: `DELETE /chat/{id}/persistent/{gmail}/{mensaje}`
+- Eliminar mensajes persistentes del chat: `DELETE /chat/{id}/persistent/{user_id}/{mensaje}`
 	>id: Identificador único del chat.<br>
 	gmail: Correo institucional del usuario.<br>
 	mensaje: Texto a eliminar.
