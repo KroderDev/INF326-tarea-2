@@ -69,3 +69,15 @@ def create_message(message_id: int, user_id: int):
     else:
         set_info(f"EXITO, Eliminar mensaje. Resultado: {resultado}")
         return resultado
+
+@app.get("/message/{thread_id}")
+def create_message(thread_id: int, typeM: int | None = None, filtro: str | None = None):
+    global LOGS
+    set_info(f"INGRESO, Obtener mensajes. Hilo: {thread_id}, Tipo: {typeM}, Filtro: {filtro}")
+    resultado, error =controller.GetMessage(thread_id,typeM,filtro)
+    if error != None:
+        set_info(f"FALLO, Obtener mensajes. Error: {error}")
+        return error
+    else:
+        set_info(f"EXITO, Obtener mensajes. Resultado: {resultado}")
+        return resultado    

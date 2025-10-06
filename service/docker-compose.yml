@@ -1,0 +1,9 @@
+services:
+    contAPI:
+        build: ./Main/
+        image: dockerfile
+        container_name: API_serv
+        ports:
+            - "8000:3001"
+        volumes:
+            - "./logs:/app/logs"   
