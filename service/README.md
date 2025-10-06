@@ -34,6 +34,7 @@ flowchart LR
     L_n1_n7_0@{ animation: slow } 
     L_n1_n8_0@{ animation: slow }
 ```
+>En el caso del almacenamiento de los chats se opto por lo siguiente: Se generara una tabla por cada hilo conteniendo dotos los datos mencionados al respecto. Con el fin de facilitar las lecturas se generara una vista por cada tabla, la cual servira como punto medio a la hora de realizar la extraccion al almacenarse los X mensajes mas recientes. A su vez con el fin de agilizar las consultas de mensajes tendremmos una BD en memoria, lo cual agilizara las consultas a chats de alto flujo y reducira el uso de la base de datos principal.
 
 ---
 
