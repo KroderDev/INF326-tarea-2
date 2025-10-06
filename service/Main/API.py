@@ -47,10 +47,10 @@ def create_message(thread_id: int, user_id: int,content: str ,typeM: List[str] =
         return resultado
 
 @app.put("/message/{thread_id}/{message_id}/{user_id}/{content}")
-def create_message(thread_id: int, message_id: int,user_id: int,content: str ,typeM: List[str] = Query(...), path: List[str] = Query(...)):
+def update_message(thread_id: int, message_id: int,user_id: int,content: str ,typeM: List[str] = Query(...), path: List[str] = Query(...)):
     global LOGS
     set_info(f"INGRESO, Modificar mensaje. Hilo: {thread_id}, Mensaje: {message_id},Usuario: {user_id}, Contenido: {content}, Tipos: {typeM}, Path: {path} ")
-    resultado, error =controller.ModifyMessage(thread_id,message_id,user_id,content,typeM,path)
+    resultado, error =controller.UpdateMessage(thread_id,message_id,user_id,content,typeM,path)
     if error != None:
         set_info(f"FALLO, Modificar mensaje. Error: {error}")
         return error
@@ -58,10 +58,10 @@ def create_message(thread_id: int, message_id: int,user_id: int,content: str ,ty
         set_info(f"EXITO, Modificar mensaje. Resultado: {resultado}")
         return resultado
 
-@app.delete("/message/{message_id}/{user_id}")
-def create_message(message_id: int, user_id: int):
+@app.delete("/message/{thread_id}/{message_id}/{user_id}")
+def delete_message(thread_id:int,message_id: int, user_id: int):
     global LOGS
-    set_info(f"INGRESO, Eliminar mensaje. Mensaje: {message_id}, Usuario: {user_id}")
+    set_info(f"INGRESO, Eliminar mensaje. Hilo: {thread_id}, Mensaje: {message_id}, Usuario: {user_id}")
     resultado, error =controller.DeleteMessage(message_id,user_id)
     if error != None:
         set_info(f"FALLO, Eliminar mensaje. Error: {error}")
@@ -71,7 +71,7 @@ def create_message(message_id: int, user_id: int):
         return resultado
 
 @app.get("/message/{thread_id}")
-def create_message(thread_id: int, typeM: int | None = None, filtro: str | None = None):
+def get_message(thread_id: int, typeM: int | None = None, filtro: str | None = None):
     global LOGS
     set_info(f"INGRESO, Obtener mensajes. Hilo: {thread_id}, Tipo: {typeM}, Filtro: {filtro}")
     resultado, error =controller.GetMessage(thread_id,typeM,filtro)

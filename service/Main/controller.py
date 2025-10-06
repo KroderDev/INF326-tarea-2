@@ -4,7 +4,7 @@ def CreateMessage(thread,user,content,typeM,path):
     resultado, error = None, None
     return resultado, error
 
-def ModifyMessage(thread,message,user,content,typeM,path):
+def UpdateMessage(thread,message,user,content,typeM,path):
     resultado, error = None, None
     return resultado, error
 
