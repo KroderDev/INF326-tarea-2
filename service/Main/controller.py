@@ -1,11 +1,39 @@
 CHUNK_DATE, CHUNK_CANT = 10, 50  #10 dias y 50 mensajes
 
+QUEUE = {} #Definir los valores de la cola de eventos
+
+#data se pasa como diccionario para tener todos los valores deseados
+def SendEvent(typeM, data):
+    global QUEUE
+    error = None
+    if typeM == "CREATE":
+        try:
+            #Poner insert
+            x = True
+        except Exception as e:
+            #print("Error:", e)
+            error = e
+    elif typeM == "UPDATE":
+        try:
+            #Poner modificacion
+            x = True
+        except Exception as e:
+            #print("Error:", e)
+            error = e
+    else:
+        error = "Error en el tipo en SendEvent()"
+    return error
+    
 def CreateMessage(thread,user,content,typeM,path):
-    resultado, error = None, None
+    resultado, error, data = None, None, {}
+
+    error = SendEvent(typeM, data)
     return resultado, error
 
 def UpdateMessage(thread,message,user,content,typeM,path):
-    resultado, error = None, None
+    resultado, error, data = None, None, {}
+
+    error = SendEvent(typeM, data)
     return resultado, error
 
 def DeleteMessage(message,user):
