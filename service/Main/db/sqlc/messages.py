@@ -3,6 +3,7 @@
 #   sqlc v1.29.0
 # source: messages.sql
 import dataclasses
+import datetime
 from typing import Any, Optional
 import uuid
 
@@ -45,7 +46,7 @@ class CreateMessageParams:
     id: uuid.UUID
     thread_id: uuid.UUID
     user_id: uuid.UUID
-    type: Optional[Any]
+    type: Optional[models.Type]
     column_5: Optional[Any]
     paths: Optional[Any]
     column_7: Optional[Any]
@@ -127,9 +128,9 @@ LIMIT :p5
 @dataclasses.dataclass()
 class ListThreadMessagesByTypeDescBeforeParams:
     thread_id: uuid.UUID
-    type: Optional[Any]
-    created_at: Optional[Any]
-    created_at_2: Optional[Any]
+    type: Optional[models.Type]
+    created_at: Optional[datetime.datetime]
+    created_at_2: Optional[datetime.datetime]
     limit: int
 
 

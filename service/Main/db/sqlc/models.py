@@ -2,8 +2,16 @@
 # versions:
 #   sqlc v1.29.0
 import dataclasses
+import datetime
+import enum
 from typing import Any, Optional
 import uuid
+
+
+class Type(str, enum.Enum):
+    TEXT = "text"
+    AUDIO = "audio"
+    FILE = "file"
 
 
 @dataclasses.dataclass()
@@ -11,9 +19,9 @@ class Message:
     id: uuid.UUID
     thread_id: uuid.UUID
     user_id: uuid.UUID
-    type: Optional[Any]
+    type: Optional[Type]
     content: Optional[str]
     paths: Optional[Any]
-    created_at: Optional[Any]
-    updated_at: Optional[Any]
-    deleted_at: Optional[Any]
+    created_at: Optional[datetime.datetime]
+    updated_at: Optional[datetime.datetime]
+    deleted_at: Optional[datetime.datetime]

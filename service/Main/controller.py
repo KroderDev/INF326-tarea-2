@@ -13,13 +13,6 @@ def SendEvent(typeM, data):
         except Exception as e:
             #print("Error:", e)
             error = e
-    elif typeM == "UPDATE":
-        try:
-            #Poner modificacion
-            x = True
-        except Exception as e:
-            #print("Error:", e)
-            error = e
     else:
         error = "Error en el tipo en SendEvent()"
     return error
