@@ -1,7 +1,15 @@
+import psycopg
+
 CHUNK_DATE, CHUNK_CANT = 10, 50  #10 dias y 50 mensajes
 
 QUEUE = {} #Definir los valores de la cola de eventos
-
+DB = {
+    "name":"messages_service",
+    "user":"root",
+    "password":"secret",
+    "host":"localhost",
+    "port":"8001"
+}
 #data se pasa como diccionario para tener todos los valores deseados
 def SendEvent(typeM, data):
     global QUEUE
@@ -17,9 +25,28 @@ def SendEvent(typeM, data):
         error = "Error en el tipo en SendEvent()"
     return error
     
+
 def CreateMessage(thread,user,content,typeM,path):
     resultado, error, data = None, None, {}
 
+    conn = psycopg.connect(
+        dbname=DB["name"],
+        user=DB["user"],
+        password=DB["password"],
+        host=DB["host"],
+        port=DB["port"]
+    )
+    msg = create_message(
+        conn,
+        thread_id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+        type_=Type.TEXT,
+        content="Hola mundo",
+    )
+
+    print(msg)
+    conn.commit()
+    conn.close()
     error = SendEvent(typeM, data)
     return resultado, error
 
