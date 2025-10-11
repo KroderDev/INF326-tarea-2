@@ -1,0 +1,14 @@
+FROM postgres:17-alpine
+
+# Variables de entorno
+ENV POSTGRES_USER=root
+ENV POSTGRES_PASSWORD=secret
+ENV POSTGRES_DB=messages_service
+
+COPY ./migrations/*.sql /docker-entrypoint-initdb.d/
+
+# Si quieres inicializar la base de datos con algún SQL, puedes ponerlo en /docker-entrypoint-initdb.d/
+# COPY init.sql /docker-entrypoint-initdb.d/
+
+# No es necesario instalar migrate ni crear scripts inline
+# El contenedor levantará PostgreSQL y creará la base definida en POSTGRES_DB automáticamente

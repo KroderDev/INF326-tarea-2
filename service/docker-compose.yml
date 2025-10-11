@@ -1,9 +1,19 @@
 services:
     contAPI:
         build: ./Main/
-        image: dockerfile
+        image: dockerfile-api
         container_name: API_serv
         ports:
             - "8000:3001"
         volumes:
             - "./logs:/app/logs"   
+        depends_on:
+            - contDB
+
+    contDB:
+        build: ./Main/db/
+        image: dockerfile-db
+        container_name: DB_serv
+        ports:
+            - "8001:5432"
+
