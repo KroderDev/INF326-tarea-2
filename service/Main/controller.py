@@ -1,5 +1,8 @@
 import psycopg
-
+import uuid
+import datetime
+from db.sqlc.models import *
+from db.sqlc.messages import *
 CHUNK_DATE, CHUNK_CANT = 10, 50  #10 dias y 50 mensajes
 
 QUEUE = {} #Definir los valores de la cola de eventos
@@ -36,18 +39,44 @@ def CreateMessage(thread,user,content,typeM,path):
         host=DB["host"],
         port=DB["port"]
     )
-    msg = create_message(
-        conn,
-        thread_id=uuid.uuid4(),
-        user_id=uuid.uuid4(),
-        type_=Type.TEXT,
-        content="Hola mundo",
+    conn.autocommit = True
+    msg = Message(
+        id=None,
+        thread_id=thread,
+        user_id=user,
+        type=typeM,
+        content=content,
+        paths=path,
+        created_at=datetime.datetime.now(),
+        updated_at=None,
+        deleted_at=None
     )
-
-    print(msg)
-    conn.commit()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            CREATE_MESSAGE,
+            {
+                "p1": msg.id,
+                "p2": str(msg.thread_id),
+                "p3": str(msg.user_id),
+                "p4": msg.type.value if msg.type else None,
+                "p5": msg.content,
+                "p6": msg.paths,
+                "p7": msg.created_at,
+                "p8": msg.updated_at
+            }
+        )
+        result = cur.fetchone()
+        print("Mensaje insertado:", result)
+    except Exception as e:
+        error = e
     conn.close()
-    error = SendEvent(typeM, data)
+    if error != None:
+        data = {
+            "tag": "message-service",
+            "message": msg
+        }
+        error = SendEvent("CREATE", data)
     return resultado, error
 
 def UpdateMessage(thread,message,user,content,typeM,path):
