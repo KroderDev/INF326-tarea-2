@@ -1,11 +1,18 @@
 import psycopg
-import uuid
+import pika
+import json
+import dataclasses
 import datetime
 from db.sqlc.models import *
 from db.sqlc.messages import *
 CHUNK_DATE, CHUNK_CANT = 10, 50  #10 dias y 50 mensajes
 
-QUEUE = {} #Definir los valores de la cola de eventos
+QUEUE = {
+    "user":"root",
+    "password":"secret",
+    "host":"localhost",
+    "port":"8002"
+} #Definir los valores de la cola de eventos
 DB = {
     "name":"messages_service",
     "user":"root",
@@ -17,15 +24,37 @@ DB = {
 def SendEvent(typeM, data):
     global QUEUE
     error = None
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(
+            host=QUEUE["host"],
+            port=QUEUE["port"],
+            credentials=pika.PlainCredentials(QUEUE["user"], QUEUE["password"])
+        )
+    )
+    channel = connection.channel()
+
+    channel.queue_declare(queue=data["tag"], durable=True)
+
     if typeM == "CREATE":
         try:
-            #Poner insert
-            x = True
+            message = data["message"]
+            body = json.dumps(dataclasses.asdict(message), default=str)
+            # Publicar el mensaje
+            channel.basic_publish(
+                exchange='',
+                routing_key=data["tag"],  # nombre de la cola
+                body=body,
+                properties=pika.BasicProperties(
+                    delivery_mode=2  # hace el mensaje persistente
+                )
+            )            
         except Exception as e:
             #print("Error:", e)
             error = e
     else:
         error = "Error en el tipo en SendEvent()"
+
+    connection.close()    
     return error
     
 
@@ -73,7 +102,7 @@ def CreateMessage(thread,user,content,typeM,path):
     conn.close()
     if error != None:
         data = {
-            "tag": "message-service",
+            "tag": "messages_service",
             "message": msg
         }
         error = SendEvent("CREATE", data)
