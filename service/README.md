@@ -41,39 +41,23 @@ flowchart LR
 
 ### API
 
-**POST _/message/{thread_id}/{user_id}/{content}_**
-- thread_id: identificador unico del hilo.
-- user_id: identificador unico del usuario que registra el mensaje.
-- content: Contenido a insertar dentro del mensaje.
-- typeM _(Se pasa como opcional)_: Lista con los tipos de mensajes que tiene (archivo, mensaje de voz, etc.).
-- path _(Se pasa como opcional)_: Lista con las rutas de todos los archivos insertados en el mensaje.
->Ej de llamada:
-    POST /message/1/42?typeM=text?path=dir/archivo_texto
+- POST `/threads/{thread_id}/messages`
+  - Header: `X-User-Id: <uuid>` (obligatorio)
+  - Body: `{ "content": str, "type": "text|audio|file"?, "paths": string[]? }`
+  - Respuestas: `201` con el mensaje creado; `400` si header inválido; `500` en error interno.
 
-**PUT _/message/{thread_id}/{message_id}/{user_id}/{content}_**
-- thread_id: identificador unico del hilo.
-- user_id: identificador unico del usuario que registra el mensaje.
-- message_id: identificador unico del mensaje a modificar.
-- content: Contenido a insertar dentro del mensaje.
-- typeM _(Se pasa como opcional)_: Lista con los tipos de mensajes que tiene (archivo, mensaje de voz, etc.).
-- path _(Se pasa como opcional)_: Lista con las rutas de todos los archivos insertados en el mensaje.
->Ej de llamada:
-    PUT /message/1/5/42?typeM=text?path=dir/archivo_texto
+- PUT `/threads/{thread_id}/messages/{message_id}`
+  - Header: `X-User-Id: <uuid>` (obligatorio)
+  - Body: `{ "content"?: str, "paths"?: string[] }`
+  - Respuestas: `200` con el mensaje; `404` si no existe; `400/500` según error.
 
+- DELETE `/threads/{thread_id}/messages/{message_id}`
+  - Header: `X-User-Id: <uuid>` (obligatorio)
+  - Respuestas: `204` al eliminar; `404` si no existe; `400/500` según error.
 
-**DELETE _/message/{thread_id}/{message_id}/{user_id}_**
-- thread_id: identificador unico del hilo.
-- user_id: identificador unico del usuario que registra el mensaje.
-- message_id: identificador unico del mensaje a modificar.
->Ej de llamada:
-    DELETE /message/1/5/42
-
-**GET _/message/{thread_id}_**
-- thread_id: identificador unico del hilo.
-- typeM _(Se pasa como opcional)_: Valor del tipo del filtrado, -1 segun fecha y 1 segun cantidad de mensajes.
-- filtro _(Se pasa como opcional)_: Valor donde realiza el corte la obtencion, podrian ser X mensajes o desde Y fecha.
->Ej de llamada:
-    GET /message/1/?typeM=1?filtro=18-01-2025
+- GET `/threads/{thread_id}/messages?limit=50`
+  - Query: `limit` (1..200). Por defecto `50`.
+  - Respuestas: `200` con lista de mensajes; `500` en error interno.
 ---
 
 ### Eventos
@@ -81,4 +65,11 @@ flowchart LR
 Nuevo mensaje
 
 ---
+
+### Arranque con Docker Compose
+
+- `make compose` o `docker compose up -d --build` crea la base de datos si no existe y aplica las migraciones antes de iniciar la API.
+- Servicio `db-init` asegura la creación de `messages_service` incluso si el volumen ya existía.
+- Servicio `migrate` aplica las migraciones y la API espera a que termine exitosamente.
+
 

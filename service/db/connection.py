@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
@@ -44,8 +45,23 @@ class AsyncDatabase:
                 min_size=self.min_size,
                 max_size=self.max_size,
                 command_timeout=30,
+                init=self._init_conn,
             )
         return self._pool
+
+    async def _init_conn(self, conn: asyncpg.Connection) -> None:
+        await conn.set_type_codec(
+            "json",
+            encoder=json.dumps,
+            decoder=json.loads,
+            schema="pg_catalog",
+        )
+        await conn.set_type_codec(
+            "jsonb",
+            encoder=json.dumps,
+            decoder=json.loads,
+            schema="pg_catalog",
+        )
 
     @staticmethod
     def prepare(sql: str, params: Dict[str, Any]) -> Tuple[str, List[Any]]:

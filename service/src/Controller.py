@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pika
 
 from db.sqlc import models as sqlc_models
-from db.sqlc.messages import (CREATE_MESSAGE,
+from db.sqlc.messages import (CREATE_MESSAGE, GET_MESSAGE_BY_ID_FOR_UPDATE,
                               LIST_THREAD_MESSAGES_NOT_DELETED_DESC_FIRST,
                               SOFT_DELETE_MESSAGE,
                               UPDATE_MESSAGE_CONTENT_AND_PATHS)
@@ -115,25 +115,35 @@ async def UpdateMessage(
     message: uuid.UUID,
     user: uuid.UUID,
     content: Optional[str],
-    typeM: Optional[sqlc_models.Type],  # no se actualiza con esta query
+    typeM: Optional[sqlc_models.Type],
     path: Optional[List[str]],
 ) -> Tuple[Optional[Dict[str, Any]], Optional[Exception]]:
-    # Nota: el SQL generado por sqlc solo actualiza content/paths
+    # Nota: solo usamos queries de sqlc
     resultado: Optional[Dict[str, Any]] = None
     error: Optional[Exception] = None
-
-    params = {
-        "p1": _as_uuid(message),
-        "p2": content,
-        "p3": path,
-        "p4": None,  # updated_at -> NOW() por defecto
-    }
-    sql, values = prepare(UPDATE_MESSAGE_CONTENT_AND_PATHS, params)
 
     try:
         pool = await get_pool()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow(sql, *values)
+            # 1) Validar pertenencia al thread (y bloquear fila para actualización)
+            sel_sql, sel_vals = prepare(
+                GET_MESSAGE_BY_ID_FOR_UPDATE, {"p1": _as_uuid(message)}
+            )
+            current = await conn.fetchrow(sel_sql, *sel_vals)
+            if current is None or current.get("thread_id") != _as_uuid(thread):
+                raise Exception("No se retornó fila al actualizar el mensaje")
+
+            # 2) Actualizar contenido/paths usando query de sqlc
+            upd_sql, upd_vals = prepare(
+                UPDATE_MESSAGE_CONTENT_AND_PATHS,
+                {
+                    "p1": _as_uuid(message),
+                    "p2": content,
+                    "p3": path,
+                    "p4": None,  # updated_at -> NOW() por defecto
+                },
+            )
+            row = await conn.fetchrow(upd_sql, *upd_vals)
             if row is None:
                 raise Exception("No se retornó fila al actualizar el mensaje")
             resultado = dict(row)
@@ -144,19 +154,32 @@ async def UpdateMessage(
 
 
 async def DeleteMessage(
-    message: uuid.UUID, user: uuid.UUID
+    thread: uuid.UUID, message: uuid.UUID, user: uuid.UUID
 ) -> Tuple[Optional[Dict[str, Any]], Optional[Exception]]:
     # Borrado suave por defecto
     resultado: Optional[Dict[str, Any]] = None
     error: Optional[Exception] = None
 
-    params = {"p1": _as_uuid(message), "p2": None}  # deleted_at -> NOW()
-    sql, values = prepare(SOFT_DELETE_MESSAGE, params)
-
     try:
         pool = await get_pool()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow(sql, *values)
+            # 1) Validar pertenencia al thread y que no esté borrado
+            sel_sql, sel_vals = prepare(
+                GET_MESSAGE_BY_ID_FOR_UPDATE, {"p1": _as_uuid(message)}
+            )
+            current = await conn.fetchrow(sel_sql, *sel_vals)
+            if (
+                current is None
+                or current.get("thread_id") != _as_uuid(thread)
+                or current.get("deleted_at") is not None
+            ):
+                raise Exception("No se retornó fila al borrar el mensaje")
+
+            # 2) Ejecutar soft delete de sqlc
+            del_sql, del_vals = prepare(
+                SOFT_DELETE_MESSAGE, {"p1": _as_uuid(message), "p2": None}
+            )
+            row = await conn.fetchrow(del_sql, *del_vals)
             if row is None:
                 raise Exception("No se retornó fila al borrar el mensaje")
             resultado = dict(row)

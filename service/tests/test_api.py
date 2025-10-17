@@ -29,60 +29,83 @@ class _DummyHandler(logging.Handler):
 
 @pytest.fixture()
 def api_module(monkeypatch):
-    # Avoid touching the filesystem under /app/logs when importing API
+    # Evita escribir logs en disco durante tests
     import logging.handlers as lh
 
     monkeypatch.setattr(lh, "RotatingFileHandler", _DummyHandler)
     monkeypatch.setattr(os, "makedirs", lambda *a, **k: None)
 
-    # Fresh import with patches applied
     if "API" in sys.modules:
         del sys.modules["API"]
     api = importlib.import_module("API")
     return api
 
 
+def _fake_message_row(thread_id: uuid.UUID, user_id: uuid.UUID) -> dict:
+    return {
+        "id": uuid.uuid4(),
+        "thread_id": thread_id,
+        "user_id": user_id,
+        "type": None,
+        "content": "hola",
+        "paths": ["/a/b"],
+        "created_at": None,
+        "updated_at": None,
+        "deleted_at": None,
+    }
+
+
 def test_create_message_success(api_module, monkeypatch):
     from fastapi.testclient import TestClient
 
-    payload = {"ok": True}
-
     async def _create(thread, user, content, typeM, path):
-        return payload, None
+        return _fake_message_row(thread, user), None
 
     monkeypatch.setattr(api_module.Controller, "CreateMessage", _create)
 
     client = TestClient(api_module.app)
     t = uuid.uuid4()
     u = uuid.uuid4()
-    r = client.post(f"/message/{t}/{u}/hola")
-    assert r.status_code == 200
-    assert r.json() == payload
+    r = client.post(
+        f"/threads/{t}/messages",
+        headers={"X-User-Id": str(u)},
+        json={"content": "hola", "type": None, "paths": ["/a/b"]},
+    )
+    assert r.status_code == 201
+    body = r.json()
+    assert body["thread_id"] == str(t)
+    assert body["user_id"] == str(u)
+    assert body["content"] == "hola"
 
 
-def test_create_message_error(api_module, monkeypatch):
+def test_create_message_error_maps_500(api_module, monkeypatch):
     from fastapi.testclient import TestClient
 
     async def _create(thread, user, content, typeM, path):
-        return None, {"error": "boom"}
+        return None, Exception("boom")
 
     monkeypatch.setattr(api_module.Controller, "CreateMessage", _create)
 
     client = TestClient(api_module.app)
     t = uuid.uuid4()
     u = uuid.uuid4()
-    r = client.post(f"/message/{t}/{u}/hola")
-    assert r.status_code == 200
-    assert r.json() == {"error": "boom"}
+    r = client.post(
+        f"/threads/{t}/messages",
+        headers={"X-User-Id": str(u)},
+        json={"content": "hola"},
+    )
+    assert r.status_code == 500
+    assert r.json()["detail"] == "boom"
 
 
 def test_update_message_success(api_module, monkeypatch):
     from fastapi.testclient import TestClient
 
-    payload = {"updated": True}
-
     async def _update(thread, message, user, content, typeM, path):
-        return payload, None
+        return (
+            _fake_message_row(thread, user) | {"id": message, "content": content},
+            None,
+        )
 
     monkeypatch.setattr(api_module.Controller, "UpdateMessage", _update)
 
@@ -90,18 +113,42 @@ def test_update_message_success(api_module, monkeypatch):
     t = uuid.uuid4()
     m = uuid.uuid4()
     u = uuid.uuid4()
-    r = client.put(f"/message/{t}/{m}/{u}/nuevo")
+    r = client.put(
+        f"/threads/{t}/messages/{m}",
+        headers={"X-User-Id": str(u)},
+        json={"content": "nuevo", "paths": None},
+    )
     assert r.status_code == 200
-    assert r.json() == payload
+    body = r.json()
+    assert body["id"] == str(m)
+    assert body["content"] == "nuevo"
 
 
-def test_delete_message_success(api_module, monkeypatch):
+def test_update_message_not_found_maps_404(api_module, monkeypatch):
     from fastapi.testclient import TestClient
 
-    payload = {"deleted": True}
+    async def _update(thread, message, user, content, typeM, path):
+        return None, Exception("No se retornó fila al actualizar el mensaje")
 
-    async def _delete(message, user):
-        return payload, None
+    monkeypatch.setattr(api_module.Controller, "UpdateMessage", _update)
+
+    client = TestClient(api_module.app)
+    t = uuid.uuid4()
+    m = uuid.uuid4()
+    u = uuid.uuid4()
+    r = client.put(
+        f"/threads/{t}/messages/{m}",
+        headers={"X-User-Id": str(u)},
+        json={"content": "nuevo"},
+    )
+    assert r.status_code == 404
+
+
+def test_delete_message_success_204(api_module, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    async def _delete(thread, message, user):
+        return {"ok": True}, None
 
     monkeypatch.setattr(api_module.Controller, "DeleteMessage", _delete)
 
@@ -109,23 +156,39 @@ def test_delete_message_success(api_module, monkeypatch):
     t = uuid.uuid4()
     m = uuid.uuid4()
     u = uuid.uuid4()
-    r = client.delete(f"/message/{t}/{m}/{u}")
-    assert r.status_code == 200
-    assert r.json() == payload
+    r = client.delete(f"/threads/{t}/messages/{m}", headers={"X-User-Id": str(u)})
+    assert r.status_code == 204
+    assert r.text == ""
 
 
-def test_get_message_success(api_module, monkeypatch):
+def test_delete_message_not_found_maps_404(api_module, monkeypatch):
     from fastapi.testclient import TestClient
 
-    payload = [{"id": 1}]
+    async def _delete(thread, message, user):
+        return None, Exception("No se retornó fila al borrar el mensaje")
+
+    monkeypatch.setattr(api_module.Controller, "DeleteMessage", _delete)
+
+    client = TestClient(api_module.app)
+    t = uuid.uuid4()
+    m = uuid.uuid4()
+    u = uuid.uuid4()
+    r = client.delete(f"/threads/{t}/messages/{m}", headers={"X-User-Id": str(u)})
+    assert r.status_code == 404
+
+
+def test_list_messages_success(api_module, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    out = [_fake_message_row(uuid.uuid4(), uuid.uuid4())]
 
     async def _get(thread, typeM, filtro):
-        return payload, None
+        return out, None
 
     monkeypatch.setattr(api_module.Controller, "GetMessage", _get)
 
     client = TestClient(api_module.app)
     t = uuid.uuid4()
-    r = client.get(f"/message/{t}")
+    r = client.get(f"/threads/{t}/messages?limit=10")
     assert r.status_code == 200
-    assert r.json() == payload
+    assert isinstance(r.json(), list)
