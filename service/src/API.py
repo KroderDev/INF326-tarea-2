@@ -44,9 +44,9 @@ LOGS = get_logger("API_logs")
 
 # Modelos de entrada/salida
 class MessageCreateIn(BaseModel):
-    content: str = Field(..., description="Contenido del mensaje")
-    type: Optional[sqlc_models.Type] = Field(None, description="Tipo de mensaje")
-    paths: Optional[List[str]] = Field(None, description="Rutas asociadas")
+    content: str = Field(..., description="Message content")
+    type: Optional[sqlc_models.Type] = Field(None, description="Message type")
+    paths: Optional[List[str]] = Field(None, description="Associated paths")
 
 
 class MessageUpdateIn(BaseModel):
@@ -66,7 +66,7 @@ class MessageOut(BaseModel):
 
 
 async def get_user_id(x_user_id: str = Header(..., alias="X-User-Id")) -> uuid.UUID:
-    """Obtiene el user_id desde el header X-User-Id."""
+    """Get user_id from X-User-Id header."""
     try:
         return uuid.UUID(x_user_id)
     except Exception as e:  # 400 para header inválido
@@ -74,9 +74,10 @@ async def get_user_id(x_user_id: str = Header(..., alias="X-User-Id")) -> uuid.U
 
 
 def map_error_to_http(error: Exception) -> HTTPException:
-    """Mapea errores del controlador a códigos HTTP."""
+    """Map controller exceptions to HTTP status codes."""
     msg = str(error)
-    if "No se retornó fila" in msg or "no encontrado" in msg.lower():
+    lower = msg.lower()
+    if "no row returned" in lower or "not found" in lower:
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
     return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg)
 
@@ -97,7 +98,7 @@ async def create_message(
     payload: MessageCreateIn,
     user_id: uuid.UUID = Depends(get_user_id),
 ):
-    set_info(f"Crear mensaje hilo={thread_id} user={user_id} type={payload.type}")
+    set_info(f"Create message thread={thread_id} user={user_id} type={payload.type}")
     resultado, error = await Controller.CreateMessage(
         thread_id, user_id, payload.content, payload.type, payload.paths
     )
@@ -118,7 +119,7 @@ async def update_message(
     payload: MessageUpdateIn,
     user_id: uuid.UUID = Depends(get_user_id),
 ):
-    set_info(f"Actualizar mensaje hilo={thread_id} msg={message_id} user={user_id}")
+    set_info(f"Update message thread={thread_id} msg={message_id} user={user_id}")
     resultado, error = await Controller.UpdateMessage(
         thread_id, message_id, user_id, payload.content, None, payload.paths
     )
@@ -138,7 +139,7 @@ async def delete_message(
     message_id: uuid.UUID,
     user_id: uuid.UUID = Depends(get_user_id),
 ):
-    set_info(f"Eliminar mensaje hilo={thread_id} msg={message_id} user={user_id}")
+    set_info(f"Delete message thread={thread_id} msg={message_id} user={user_id}")
     resultado, error = await Controller.DeleteMessage(thread_id, message_id, user_id)
     if error is not None:
         raise map_error_to_http(error)
@@ -152,9 +153,9 @@ async def delete_message(
 )
 async def list_messages(
     thread_id: uuid.UUID,
-    limit: int = Query(50, ge=1, le=200, description="Cantidad de mensajes"),
+    limit: int = Query(50, ge=1, le=200, description="Number of messages"),
 ):
-    set_info(f"Listar mensajes hilo={thread_id} limit={limit}")
+    set_info(f"List messages thread={thread_id} limit={limit}")
     # Compatibilidad con Controller.GetMessage (typeM=1 => por cantidad)
     resultado, error = await Controller.GetMessage(thread_id, 1, str(limit))
     if error is not None:

@@ -53,7 +53,7 @@ def SendEvent(event_type: str, data: Dict[str, Any]) -> Optional[Exception]:
                 properties=pika.BasicProperties(delivery_mode=2),
             )
         else:
-            error = Exception("Tipo de evento no soportado")
+            error = Exception("Unsupported event type")
     except Exception as e:  # pragma: no cover (errores de red)
         error = e
     finally:
@@ -94,7 +94,7 @@ async def CreateMessage(
         async with pool.acquire() as conn:
             row = await conn.fetchrow(sql, *values)
             if row is None:
-                raise Exception("No se retornó fila al crear el mensaje")
+                raise Exception("No row returned when creating message")
             resultado = dict(row)
 
         await _send_event_async(
@@ -131,7 +131,7 @@ async def UpdateMessage(
             )
             current = await conn.fetchrow(sel_sql, *sel_vals)
             if current is None or current.get("thread_id") != _as_uuid(thread):
-                raise Exception("No se retornó fila al actualizar el mensaje")
+                raise Exception("No row returned when updating message")
 
             # 2) Actualizar contenido/paths usando query de sqlc
             upd_sql, upd_vals = prepare(
@@ -145,7 +145,7 @@ async def UpdateMessage(
             )
             row = await conn.fetchrow(upd_sql, *upd_vals)
             if row is None:
-                raise Exception("No se retornó fila al actualizar el mensaje")
+                raise Exception("No row returned when updating message")
             resultado = dict(row)
     except Exception as e:
         error = e
@@ -173,7 +173,7 @@ async def DeleteMessage(
                 or current.get("thread_id") != _as_uuid(thread)
                 or current.get("deleted_at") is not None
             ):
-                raise Exception("No se retornó fila al borrar el mensaje")
+                raise Exception("No row returned when deleting message")
 
             # 2) Ejecutar soft delete de sqlc
             del_sql, del_vals = prepare(
@@ -181,7 +181,7 @@ async def DeleteMessage(
             )
             row = await conn.fetchrow(del_sql, *del_vals)
             if row is None:
-                raise Exception("No se retornó fila al borrar el mensaje")
+                raise Exception("No row returned when deleting message")
             resultado = dict(row)
     except Exception as e:
         error = e

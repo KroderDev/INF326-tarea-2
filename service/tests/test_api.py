@@ -128,7 +128,7 @@ def test_update_message_not_found_maps_404(api_module, monkeypatch):
     from fastapi.testclient import TestClient
 
     async def _update(thread, message, user, content, typeM, path):
-        return None, Exception("No se retornó fila al actualizar el mensaje")
+        return None, Exception("No row returned when updating message")
 
     monkeypatch.setattr(api_module.Controller, "UpdateMessage", _update)
 
@@ -165,7 +165,7 @@ def test_delete_message_not_found_maps_404(api_module, monkeypatch):
     from fastapi.testclient import TestClient
 
     async def _delete(thread, message, user):
-        return None, Exception("No se retornó fila al borrar el mensaje")
+        return None, Exception("No row returned when deleting message")
 
     monkeypatch.setattr(api_module.Controller, "DeleteMessage", _delete)
 
