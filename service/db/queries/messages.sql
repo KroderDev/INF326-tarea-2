@@ -9,9 +9,9 @@ FOR UPDATE;
 
 -- name: CreateMessage :one
 INSERT INTO messages (
-  id, thread_id, user_id, type, content, paths, created_at, updated_at
+  thread_id, user_id, type, content, paths, created_at, updated_at
 ) VALUES (
-  $1, $2, $3, $4, COALESCE($5, ''), $6, COALESCE($7, NOW()), COALESCE($8, NOW())
+  $1, $2, $3, COALESCE($4, ''), $5, COALESCE($6, NOW()), COALESCE($7, NOW())
 )
 RETURNING *;
 

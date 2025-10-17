@@ -4,13 +4,12 @@
 # source: messages.sql
 import dataclasses
 import datetime
-from typing import Any, Optional
 import uuid
+from typing import Any, Optional
 
 import sqlalchemy
 
-from db import models
-
+from db.sqlc import models
 
 COUNT_THREAD_MESSAGES = """-- name: count_thread_messages \\:one
 SELECT count(*) FROM messages
@@ -33,9 +32,9 @@ WHERE user_id = :p1
 
 CREATE_MESSAGE = """-- name: create_message \\:one
 INSERT INTO messages (
-  id, thread_id, user_id, type, content, paths, created_at, updated_at
+  thread_id, user_id, type, content, paths, created_at, updated_at
 ) VALUES (
-  :p1, :p2, :p3, :p4, COALESCE(:p5, ''), :p6, COALESCE(:p7, NOW()), COALESCE(:p8, NOW())
+  :p1, :p2, :p3, COALESCE(:p4, ''), :p5, COALESCE(:p6, NOW()), COALESCE(:p7, NOW())
 )
 RETURNING id, thread_id, user_id, type, content, paths, created_at, updated_at, deleted_at
 """
@@ -43,14 +42,13 @@ RETURNING id, thread_id, user_id, type, content, paths, created_at, updated_at, 
 
 @dataclasses.dataclass()
 class CreateMessageParams:
-    id: uuid.UUID
     thread_id: uuid.UUID
     user_id: uuid.UUID
     type: Optional[models.Type]
-    column_5: Optional[Any]
+    column_4: Optional[Any]
     paths: Optional[Any]
+    column_6: Optional[Any]
     column_7: Optional[Any]
-    column_8: Optional[Any]
 
 
 DELETE_MESSAGE_HARD = """-- name: delete_message_hard \\:exec

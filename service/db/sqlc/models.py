@@ -4,8 +4,8 @@
 import dataclasses
 import datetime
 import enum
-from typing import Any, Optional
 import uuid
+from typing import Any, Optional
 
 
 class Type(str, enum.Enum):

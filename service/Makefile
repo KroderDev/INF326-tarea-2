@@ -16,4 +16,23 @@ migratedown:
 sqlc:
 	sqlc generate
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc
+deps:
+	pip install -r requirements.txt
+
+compose:
+	docker-compose up -d --build
+
+compose-down:
+	docker-compose down
+
+image:
+	docker build -t messages-service .
+
+test:
+	python -m pytest -q
+
+print:
+	black .
+	isort .
+
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc deps compose compose-down image test print

@@ -1,19 +1,88 @@
+name: as-messages
+
 services:
-    contAPI:
-        build: ./Main/
-        image: dockerfile-api
-        container_name: API_serv
+    API:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: messages-api
+        restart: unless-stopped
+        environment:
+            - DB_HOST=database
+            - DB_PORT=5432
+            - DB_USER=root
+            - DB_PASSWORD=secret
+            - DB_NAME=messages_service
+            - REDIS_HOST=redis
+            - REDIS_PORT=6379
+            - QUEUE_HOST=rabbitmq
+            - QUEUE_PORT=5672
+            - QUEUE_USER=root
+            - QUEUE_PASSWORD=secret
         ports:
-            - "8000:3001"
+            - "3000:3000"
         volumes:
             - "./logs:/app/logs"   
         depends_on:
-            - contDB
+            database:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:3000/docs', timeout=2).status<500 else sys.exit(1)\" "]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
-    contDB:
-        build: ./Main/db/
-        image: dockerfile-db
-        container_name: DB_serv
+    database:
+        image: postgres:17-alpine
+        restart: unless-stopped
+        environment:
+            - POSTGRES_USER=root
+            - POSTGRES_PASSWORD=secret
         ports:
-            - "8001:5432"
+            - "5432:5432"
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
+    redis:
+        image: redis:7-alpine
+        restart: unless-stopped
+        ports:
+            - "6379:6379"
+        volumes:
+            - redisdata:/data
+        healthcheck:
+            test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    rabbitmq:
+        image: rabbitmq:3.13-management-alpine
+        restart: unless-stopped
+        environment:
+            - RABBITMQ_DEFAULT_USER=root
+            - RABBITMQ_DEFAULT_PASS=secret
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        volumes:
+            - rabbitmqdata:/var/lib/rabbitmq
+        healthcheck:
+            test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+volumes:
+    pgdata:
+    redisdata:
+    rabbitmqdata:
