@@ -17,7 +17,7 @@ sqlc:
 	sqlc generate
 
 deps:
-	pip install -r requirements.txt
+	python -m pip install -r requirements.txt
 
 compose:
 	docker-compose up -d --build
@@ -32,7 +32,7 @@ test:
 	python -m pytest -q
 
 print:
-	black .
-	isort .
+	python -m black .
+	python -m isort .
 
 .PHONY: postgres createdb dropdb migrateup migratedown sqlc deps compose compose-down image test print
