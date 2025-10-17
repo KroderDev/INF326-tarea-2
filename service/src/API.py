@@ -42,7 +42,7 @@ LOGS = get_logger("API_logs")
 
 
 @app.post("/message/{thread_id}/{user_id}/{content}")
-def create_message(
+async def create_message(
     thread_id: uuid.UUID,
     user_id: uuid.UUID,
     content: str,
@@ -53,7 +53,7 @@ def create_message(
     set_info(
         f"INGRESO, Crear mensaje. Hilo: {thread_id}, Usuario: {user_id}, Contenido: {content}, Tipos: {typeM}, Path: {path} "
     )
-    resultado, error = Controller.CreateMessage(
+    resultado, error = await Controller.CreateMessage(
         thread_id, user_id, content, typeM, path
     )
     if error != None:
@@ -65,7 +65,7 @@ def create_message(
 
 
 @app.put("/message/{thread_id}/{message_id}/{user_id}/{content}")
-def update_message(
+async def update_message(
     thread_id: uuid.UUID,
     message_id: uuid.UUID,
     user_id: uuid.UUID,
@@ -77,7 +77,7 @@ def update_message(
     set_info(
         f"INGRESO, Modificar mensaje. Hilo: {thread_id}, Mensaje: {message_id},Usuario: {user_id}, Contenido: {content}, Tipos: {typeM}, Path: {path} "
     )
-    resultado, error = Controller.UpdateMessage(
+    resultado, error = await Controller.UpdateMessage(
         thread_id, message_id, user_id, content, typeM, path
     )
     if error != None:
@@ -89,12 +89,14 @@ def update_message(
 
 
 @app.delete("/message/{thread_id}/{message_id}/{user_id}")
-def delete_message(thread_id: uuid.UUID, message_id: uuid.UUID, user_id: uuid.UUID):
+async def delete_message(
+    thread_id: uuid.UUID, message_id: uuid.UUID, user_id: uuid.UUID
+):
     global LOGS
     set_info(
         f"INGRESO, Eliminar mensaje. Hilo: {thread_id}, Mensaje: {message_id}, Usuario: {user_id}"
     )
-    resultado, error = Controller.DeleteMessage(message_id, user_id)
+    resultado, error = await Controller.DeleteMessage(message_id, user_id)
     if error != None:
         set_info(f"FALLO, Eliminar mensaje. Error: {error}")
         return error
@@ -104,14 +106,14 @@ def delete_message(thread_id: uuid.UUID, message_id: uuid.UUID, user_id: uuid.UU
 
 
 @app.get("/message/{thread_id}")
-def get_message(
+async def get_message(
     thread_id: uuid.UUID, typeM: Optional[int] = None, filtro: Optional[str] = None
 ):
     global LOGS
     set_info(
         f"INGRESO, Obtener mensajes. Hilo: {thread_id}, Tipo: {typeM}, Filtro: {filtro}"
     )
-    resultado, error = Controller.GetMessage(thread_id, typeM, filtro)
+    resultado, error = await Controller.GetMessage(thread_id, typeM, filtro)
     if error != None:
         set_info(f"FALLO, Obtener mensajes. Error: {error}")
         return error

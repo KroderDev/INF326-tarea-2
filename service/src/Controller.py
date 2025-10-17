@@ -1,3 +1,4 @@
+import asyncio
 import dataclasses
 import datetime
 import json
@@ -6,9 +7,6 @@ import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
 import pika
-import sqlalchemy
-from sqlalchemy import bindparam, create_engine, text
-from sqlalchemy.engine import Engine
 
 from db.sqlc import models as sqlc_models
 from db.sqlc.messages import (CREATE_MESSAGE,
@@ -25,24 +23,7 @@ QUEUE = {
     "port": int(os.getenv("QUEUE_PORT", "8002")),
 }
 
-DB = {
-    "name": os.getenv("DB_NAME", "messages_service"),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", "secret"),
-    "host": os.getenv("DB_HOST", "database"),
-    "port": int(os.getenv("DB_PORT", "5432")),
-}
-
-
-def _db_url() -> str:
-    return (
-        f"postgresql+psycopg://{DB['user']}:{DB['password']}@"
-        f"{DB['host']}:{DB['port']}/{DB['name']}"
-    )
-
-
-def get_engine() -> Engine:
-    return create_engine(_db_url(), pool_size=5, max_overflow=5, future=True)
+from db.connection import get_pool, prepare
 
 
 def _as_uuid(value: Any) -> uuid.UUID:
@@ -80,7 +61,14 @@ def SendEvent(event_type: str, data: Dict[str, Any]) -> Optional[Exception]:
     return error
 
 
-def CreateMessage(
+async def _send_event_async(
+    event_type: str, data: Dict[str, Any]
+) -> Optional[Exception]:
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, lambda: SendEvent(event_type, data))
+
+
+async def CreateMessage(
     thread: uuid.UUID,
     user: uuid.UUID,
     content: Optional[str],
@@ -90,10 +78,6 @@ def CreateMessage(
     resultado: Optional[Dict[str, Any]] = None
     error: Optional[Exception] = None
 
-    engine = get_engine()
-    stmt = text(CREATE_MESSAGE).bindparams(
-        bindparam("p5", type_=sqlalchemy.JSON)
-    )  # paths JSONB
     params = {
         "p1": _as_uuid(thread),
         "p2": _as_uuid(user),
@@ -103,15 +87,17 @@ def CreateMessage(
         "p6": None,  # created_at -> NOW() por defecto
         "p7": None,  # updated_at -> NOW() por defecto
     }
+    sql, values = prepare(CREATE_MESSAGE, params)
 
     try:
-        with engine.begin() as conn:
-            res = conn.execute(stmt, params)
-            row = res.mappings().one()
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(sql, *values)
+            if row is None:
+                raise Exception("No se retornó fila al crear el mensaje")
             resultado = dict(row)
 
-        # Enviar evento después del éxito
-        SendEvent(
+        await _send_event_async(
             "CREATE",
             {
                 "tag": "messages_service",
@@ -124,7 +110,7 @@ def CreateMessage(
     return resultado, error
 
 
-def UpdateMessage(
+async def UpdateMessage(
     thread: uuid.UUID,
     message: uuid.UUID,
     user: uuid.UUID,
@@ -136,21 +122,20 @@ def UpdateMessage(
     resultado: Optional[Dict[str, Any]] = None
     error: Optional[Exception] = None
 
-    engine = get_engine()
-    stmt = text(UPDATE_MESSAGE_CONTENT_AND_PATHS).bindparams(
-        bindparam("p3", type_=sqlalchemy.JSON)
-    )
     params = {
         "p1": _as_uuid(message),
         "p2": content,
         "p3": path,
         "p4": None,  # updated_at -> NOW() por defecto
     }
+    sql, values = prepare(UPDATE_MESSAGE_CONTENT_AND_PATHS, params)
 
     try:
-        with engine.begin() as conn:
-            res = conn.execute(stmt, params)
-            row = res.mappings().one()
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(sql, *values)
+            if row is None:
+                raise Exception("No se retornó fila al actualizar el mensaje")
             resultado = dict(row)
     except Exception as e:
         error = e
@@ -158,21 +143,22 @@ def UpdateMessage(
     return resultado, error
 
 
-def DeleteMessage(
+async def DeleteMessage(
     message: uuid.UUID, user: uuid.UUID
 ) -> Tuple[Optional[Dict[str, Any]], Optional[Exception]]:
     # Borrado suave por defecto
     resultado: Optional[Dict[str, Any]] = None
     error: Optional[Exception] = None
 
-    engine = get_engine()
-    stmt = text(SOFT_DELETE_MESSAGE)
     params = {"p1": _as_uuid(message), "p2": None}  # deleted_at -> NOW()
+    sql, values = prepare(SOFT_DELETE_MESSAGE, params)
 
     try:
-        with engine.begin() as conn:
-            res = conn.execute(stmt, params)
-            row = res.mappings().one()
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(sql, *values)
+            if row is None:
+                raise Exception("No se retornó fila al borrar el mensaje")
             resultado = dict(row)
     except Exception as e:
         error = e
@@ -188,7 +174,7 @@ Tipos de llamada para gestionar:
 """
 
 
-def GetMessage(
+async def GetMessage(
     thread: uuid.UUID,
     typeM: Optional[int],
     filtro: Optional[str],
@@ -205,14 +191,13 @@ def GetMessage(
         except ValueError:
             pass
 
-    engine = get_engine()
-    stmt = text(LIST_THREAD_MESSAGES_NOT_DELETED_DESC_FIRST)
     params = {"p1": _as_uuid(thread), "p2": limit}
+    sql, values = prepare(LIST_THREAD_MESSAGES_NOT_DELETED_DESC_FIRST, params)
 
     try:
-        with engine.begin() as conn:
-            res = conn.execute(stmt, params)
-            rows = res.mappings().all()
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(sql, *values)
             resultado = [dict(r) for r in rows]
     except Exception as e:
         error = e

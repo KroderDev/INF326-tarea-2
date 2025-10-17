@@ -47,7 +47,7 @@ def test_create_message_success(api_module, monkeypatch):
 
     payload = {"ok": True}
 
-    def _create(thread, user, content, typeM, path):
+    async def _create(thread, user, content, typeM, path):
         return payload, None
 
     monkeypatch.setattr(api_module.Controller, "CreateMessage", _create)
@@ -63,7 +63,7 @@ def test_create_message_success(api_module, monkeypatch):
 def test_create_message_error(api_module, monkeypatch):
     from fastapi.testclient import TestClient
 
-    def _create(thread, user, content, typeM, path):
+    async def _create(thread, user, content, typeM, path):
         return None, {"error": "boom"}
 
     monkeypatch.setattr(api_module.Controller, "CreateMessage", _create)
@@ -81,7 +81,7 @@ def test_update_message_success(api_module, monkeypatch):
 
     payload = {"updated": True}
 
-    def _update(thread, message, user, content, typeM, path):
+    async def _update(thread, message, user, content, typeM, path):
         return payload, None
 
     monkeypatch.setattr(api_module.Controller, "UpdateMessage", _update)
@@ -100,7 +100,7 @@ def test_delete_message_success(api_module, monkeypatch):
 
     payload = {"deleted": True}
 
-    def _delete(message, user):
+    async def _delete(message, user):
         return payload, None
 
     monkeypatch.setattr(api_module.Controller, "DeleteMessage", _delete)
@@ -119,7 +119,7 @@ def test_get_message_success(api_module, monkeypatch):
 
     payload = [{"id": 1}]
 
-    def _get(thread, typeM, filtro):
+    async def _get(thread, typeM, filtro):
         return payload, None
 
     monkeypatch.setattr(api_module.Controller, "GetMessage", _get)
