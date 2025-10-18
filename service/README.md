@@ -51,9 +51,9 @@ flowchart LR
   - Header: `X-User-Id: <uuid>` (obligatorio)
   - Respuestas: `204` al eliminar; `404` si no existe; `400/500` según error.
 
-- GET `/threads/{thread_id}/messages?limit=50`
-  - Query: `limit` (1..200). Por defecto `50`.
-  - Respuestas: `200` con lista de mensajes; `500` en error interno.
+- GET `/threads/{thread_id}/messages?limit=50&cursor=<created_at|id>`
+  - Query: `limit` (1..200), `cursor` opcional para paginar por keyset. Si no se envía `cursor`, devuelve los más recientes.
+  - Respuestas: `200` con `{ items: Message[], next_cursor: string|null, has_more: boolean }`; `500` en error interno.
 ---
 
 ### Eventos

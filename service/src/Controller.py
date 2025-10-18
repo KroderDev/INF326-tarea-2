@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from clients.rabbitmq import SendEvent
 from db.sqlc import models as sqlc_models
 from db.sqlc.messages import (CREATE_MESSAGE, GET_MESSAGE_BY_ID_FOR_UPDATE,
+                              LIST_THREAD_MESSAGES_NOT_DELETED_DESC_BEFORE,
                               LIST_THREAD_MESSAGES_NOT_DELETED_DESC_FIRST,
                               SOFT_DELETE_MESSAGE,
                               UPDATE_MESSAGE_CONTENT_AND_PATHS)
@@ -175,6 +176,34 @@ async def ListMessages(
 
     params = {"p1": _as_uuid(thread), "p2": limit}
     sql, values = prepare(LIST_THREAD_MESSAGES_NOT_DELETED_DESC_FIRST, params)
+
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(sql, *values)
+            resultado = [dict(r) for r in rows]
+    except Exception as e:
+        error = e
+
+    return resultado, error
+
+
+async def ListMessagesBefore(
+    thread: uuid.UUID,
+    created_at: datetime.datetime,
+    message_id: uuid.UUID,
+    limit: int,
+) -> Tuple[Optional[List[Dict[str, Any]]], Optional[Exception]]:
+    resultado: Optional[List[Dict[str, Any]]] = None
+    error: Optional[Exception] = None
+
+    params = {
+        "p1": _as_uuid(thread),
+        "p2": created_at,
+        "p3": _as_uuid(message_id),
+        "p4": limit,
+    }
+    sql, values = prepare(LIST_THREAD_MESSAGES_NOT_DELETED_DESC_BEFORE, params)
 
     try:
         pool = await get_pool()

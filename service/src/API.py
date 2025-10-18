@@ -3,7 +3,7 @@ import logging
 import os
 import uuid
 from logging.handlers import RotatingFileHandler
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
 from pydantic import BaseModel, Field
@@ -66,6 +66,12 @@ class MessageOut(BaseModel):
     updated_at: Optional[datetime.datetime] = None
 
 
+class MessagesPageOut(BaseModel):
+    items: List[MessageOut]
+    next_cursor: Optional[str] = None
+    has_more: bool = False
+
+
 async def get_user_id(x_user_id: str = Header(..., alias="X-User-Id")) -> uuid.UUID:
     """Get user_id from X-User-Id header."""
     try:
@@ -99,13 +105,13 @@ async def create_message(
     payload: MessageCreateIn,
     user_id: uuid.UUID = Depends(get_user_id),
 ):
-    set_info(f"Create message thread={thread_id} user={user_id} type={payload.type}")
     resultado, error = await Controller.CreateMessage(
         thread_id, user_id, payload.content, payload.type, payload.paths
     )
     if error is not None:
         raise map_error_to_http(error)
     assert resultado is not None
+    set_info(f"Create message thread={thread_id} user={user_id} type={payload.type}")
     # Invalidar caché del hilo tras crear un mensaje
     await cache_recent.invalidate_thread(str(thread_id))
     return to_message_out(resultado)
@@ -122,13 +128,13 @@ async def update_message(
     payload: MessageUpdateIn,
     user_id: uuid.UUID = Depends(get_user_id),
 ):
-    set_info(f"Update message thread={thread_id} msg={message_id} user={user_id}")
     resultado, error = await Controller.UpdateMessage(
         thread_id, message_id, user_id, payload.content, None, payload.paths
     )
     if error is not None:
         raise map_error_to_http(error)
     assert resultado is not None
+    set_info(f"Update message thread={thread_id} msg={message_id} user={user_id}")
     # Invalidar caché tras actualizar
     await cache_recent.invalidate_thread(str(thread_id))
     return to_message_out(resultado)
@@ -144,10 +150,10 @@ async def delete_message(
     message_id: uuid.UUID,
     user_id: uuid.UUID = Depends(get_user_id),
 ):
-    set_info(f"Delete message thread={thread_id} msg={message_id} user={user_id}")
     resultado, error = await Controller.DeleteMessage(thread_id, message_id, user_id)
     if error is not None:
         raise map_error_to_http(error)
+    set_info(f"Delete message thread={thread_id} msg={message_id} user={user_id}")
     # Invalidar caché tras eliminar
     await cache_recent.invalidate_thread(str(thread_id))
     return None
@@ -155,30 +161,70 @@ async def delete_message(
 
 @app.get(
     "/threads/{thread_id}/messages",
-    response_model=List[MessageOut],
+    response_model=MessagesPageOut,
     tags=["messages"],
 )
 async def list_messages(
     thread_id: uuid.UUID,
     limit: int = Query(50, ge=1, le=200, description="Number of messages"),
+    cursor: Optional[str] = Query(None, description="Cursor for keyset pagination"),
 ):
-    set_info(f"List messages thread={thread_id} limit={limit}")
-    # Cache-aside: intentar Redis para recientes si está dentro del tamaño máximo de caché
+    set_info(
+        f"List messages thread={thread_id} limit={limit} cursor={'set' if cursor else 'none'}"
+    )
 
-    recent: Optional[List[dict]] = None
-    if limit <= cache_recent.CACHE_MAX_ITEMS:
+    def _parse_cursor(cur: str) -> Optional[Tuple[datetime.datetime, uuid.UUID]]:
+        try:
+            p = cur.split("|", 1)
+            if len(p) != 2:
+                return None
+            ts = datetime.datetime.fromisoformat(p[0])
+            mid = uuid.UUID(p[1])
+            return ts, mid
+        except Exception:
+            return None
+
+    def _make_cursor(item: dict[str, Any]) -> Optional[str]:
+        ts = item.get("created_at")
+        mid = item.get("id")
+        if ts is None or mid is None:
+            return None
+        if isinstance(ts, datetime.datetime):
+            ts_str = ts.isoformat()
+        else:
+            ts_str = str(ts)
+        return f"{ts_str}|{mid}"
+
+    if cursor is None and limit <= cache_recent.CACHE_MAX_ITEMS:
         recent = await cache_recent.get_recent_messages(str(thread_id), limit)
-    if recent is not None:
-        # Log: retorno desde caché
-        set_info(f"Cache hit thread={thread_id} items={len(recent)} limit={limit}")
-        return [to_message_out(r) for r in recent]
+        if recent is not None:
+            set_info(f"Cache hit thread={thread_id} items={len(recent)} limit={limit}")
+            items = [to_message_out(r) for r in recent]
+            next_cur = _make_cursor(recent[-1]) if len(recent) > 0 else None
+            has_more = len(recent) == limit
+            return MessagesPageOut(items=items, next_cursor=next_cur, has_more=has_more)
 
-    # Si no hay caché, consultar a la base de datos vía controlador
-    resultado, error = await Controller.ListMessages(thread_id, 1, str(limit))
+    before = _parse_cursor(cursor) if cursor else None
+    if before is None and cursor is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid cursor"
+        )
+
+    if before is None:
+        resultado, error = await Controller.ListMessages(thread_id, 1, str(limit))
+    else:
+        ts, mid = before
+        resultado, error = await Controller.ListMessagesBefore(
+            thread_id, ts, mid, limit
+        )
     if error is not None:
         raise map_error_to_http(error)
     assert resultado is not None
 
-    # Poblar caché con hasta CACHE_MAX_ITEMS mensajes
-    await cache_recent.set_recent_messages(str(thread_id), resultado)
-    return [to_message_out(r) for r in resultado]
+    if before is None:
+        await cache_recent.set_recent_messages(str(thread_id), resultado)
+
+    items = [to_message_out(r) for r in resultado]
+    next_cur = _make_cursor(resultado[-1]) if len(resultado) > 0 else None
+    has_more = len(resultado) == limit
+    return MessagesPageOut(items=items, next_cursor=next_cur, has_more=has_more)

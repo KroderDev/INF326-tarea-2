@@ -191,4 +191,8 @@ def test_list_messages_success(api_module, monkeypatch):
     t = uuid.uuid4()
     r = client.get(f"/threads/{t}/messages?limit=10")
     assert r.status_code == 200
-    assert isinstance(r.json(), list)
+    body = r.json()
+    assert isinstance(body, dict)
+    assert isinstance(body["items"], list)
+    assert body.get("next_cursor") is None or isinstance(body.get("next_cursor"), str)
+    assert body.get("has_more") in {True, False}
