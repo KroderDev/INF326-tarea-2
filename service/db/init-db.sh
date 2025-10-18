@@ -1,5 +1,4 @@
 #!/bin/sh
-set -e
 
 DB_HOST="${DB_HOST:-database}"
 DB_PORT="${DB_PORT:-5432}"
@@ -18,4 +17,3 @@ done
 if ! psql -h "$DB_HOST" -U "$DB_USER" -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1; then
   psql -h "$DB_HOST" -U "$DB_USER" -d postgres -c "CREATE DATABASE $DB_NAME;"
 fi
-
