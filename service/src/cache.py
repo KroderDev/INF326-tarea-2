@@ -1,8 +1,9 @@
 import json
+import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from db.redis_client import cache_enabled, get_client
+from clients.redis import cache_enabled, get_client
 
 try:
     import orjson  # type: ignore
@@ -24,9 +25,10 @@ def _key_recent(thread_id: str) -> str:
 
 
 def _dumps(obj: Any) -> str:
+    # Serializar convirtiendo tipos no estándar (UUID, datetime, enums) a str
     if orjson is not None:
-        return orjson.dumps(obj).decode("utf-8")
-    return json.dumps(obj, separators=(",", ":"))
+        return orjson.dumps(obj, default=lambda x: str(x)).decode("utf-8")
+    return json.dumps(obj, separators=(",", ":"), default=str)
 
 
 def _loads(s: str) -> Any:
@@ -53,7 +55,11 @@ async def get_recent_messages(
         if CACHE_TOUCH_ON_HIT and CACHE_TTL_SECONDS > 0:
             await client.expire(_key_recent(thread_id), CACHE_TTL_SECONDS)
         return data[:limit]
-    except Exception:
+    except Exception as e:
+        # Log en WARN si falla redis al obtener
+        logging.getLogger("API_logs").warning(
+            f"Cache get error thread={thread_id} err={e.__class__.__name__}:{e}"
+        )
         return None
 
 
@@ -70,8 +76,11 @@ async def set_recent_messages(thread_id: str, items: List[Dict[str, Any]]) -> No
             await client.set(_key_recent(thread_id), payload, ex=CACHE_TTL_SECONDS)
         else:
             await client.set(_key_recent(thread_id), payload)
-    except Exception:
+    except Exception as e:
         # mejor esfuerzo
+        logging.getLogger("API_logs").warning(
+            f"Cache set error thread={thread_id} items={len(items)} err={e.__class__.__name__}:{e}"
+        )
         return
 
 
@@ -83,5 +92,8 @@ async def invalidate_thread(thread_id: str) -> None:
         return
     try:
         await client.delete(_key_recent(thread_id))
-    except Exception:
+    except Exception as e:
+        logging.getLogger("API_logs").warning(
+            f"Cache invalidate error thread={thread_id} err={e.__class__.__name__}:{e}"
+        )
         return

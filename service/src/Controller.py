@@ -1,13 +1,10 @@
 import asyncio
-import dataclasses
 import datetime
-import json
 import os
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
-import pika
-
+from clients.rabbitmq import SendEvent
 from db.sqlc import models as sqlc_models
 from db.sqlc.messages import (CREATE_MESSAGE, GET_MESSAGE_BY_ID_FOR_UPDATE,
                               LIST_THREAD_MESSAGES_NOT_DELETED_DESC_FIRST,
@@ -16,49 +13,11 @@ from db.sqlc.messages import (CREATE_MESSAGE, GET_MESSAGE_BY_ID_FOR_UPDATE,
 
 CHUNK_DATE, CHUNK_CANT = 10, 50  # 10 días y 50 mensajes
 
-QUEUE = {
-    "user": os.getenv("QUEUE_USER", "root"),
-    "password": os.getenv("QUEUE_PASSWORD", "secret"),
-    "host": os.getenv("QUEUE_HOST", "localhost"),
-    "port": int(os.getenv("QUEUE_PORT", "8002")),
-}
-
 from db.connection import get_pool, prepare
 
 
 def _as_uuid(value: Any) -> uuid.UUID:
     return value if isinstance(value, uuid.UUID) else uuid.UUID(str(value))
-
-
-def SendEvent(event_type: str, data: Dict[str, Any]) -> Optional[Exception]:
-    error: Optional[Exception] = None
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(
-            host=QUEUE["host"],
-            port=QUEUE["port"],
-            credentials=pika.PlainCredentials(QUEUE["user"], QUEUE["password"]),
-        )
-    )
-    channel = connection.channel()
-    channel.queue_declare(queue=data["tag"], durable=True)
-
-    try:
-        if event_type == "CREATE":
-            message = data["message"]
-            body = json.dumps(message, default=str)
-            channel.basic_publish(
-                exchange="",
-                routing_key=data["tag"],
-                body=body,
-                properties=pika.BasicProperties(delivery_mode=2),
-            )
-        else:
-            error = Exception("Unsupported event type")
-    except Exception as e:  # pragma: no cover (errores de red)
-        error = e
-    finally:
-        connection.close()
-    return error
 
 
 async def _send_event_async(

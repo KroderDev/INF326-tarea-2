@@ -8,9 +8,9 @@ from typing import Any, List, Optional
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
+import cache as cache_recent
 import Controller
 from db.sqlc import models as sqlc_models
-import cache as cache_recent
 
 # Configuración de logs del servicio
 DIR = os.path.normpath("/app/logs")
@@ -164,6 +164,7 @@ async def list_messages(
 ):
     set_info(f"List messages thread={thread_id} limit={limit}")
     # Cache-aside: intentar Redis para recientes si está dentro del tamaño máximo de caché
+
     recent: Optional[List[dict]] = None
     if limit <= cache_recent.CACHE_MAX_ITEMS:
         recent = await cache_recent.get_recent_messages(str(thread_id), limit)

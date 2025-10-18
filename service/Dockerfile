@@ -12,7 +12,7 @@ COPY requirements.txt /tmp/requirements.txt
 RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
 
 # Copy source
-COPY src/*.py /app/
+COPY src/ /app/
 COPY db /app/db
 
 # Prepare logs directory
