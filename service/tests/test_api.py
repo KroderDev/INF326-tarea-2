@@ -185,7 +185,7 @@ def test_list_messages_success(api_module, monkeypatch):
     async def _get(thread, typeM, filtro):
         return out, None
 
-    monkeypatch.setattr(api_module.Controller, "GetMessage", _get)
+    monkeypatch.setattr(api_module.Controller, "ListMessages", _get)
 
     client = TestClient(api_module.app)
     t = uuid.uuid4()

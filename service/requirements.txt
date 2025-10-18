@@ -7,3 +7,5 @@ pytest
 httpx
 black
 isort
+redis
+orjson

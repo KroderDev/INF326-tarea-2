@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 import Controller
 from db.sqlc import models as sqlc_models
+import cache as cache_recent
 
 # Configuración de logs del servicio
 DIR = os.path.normpath("/app/logs")
@@ -105,6 +106,8 @@ async def create_message(
     if error is not None:
         raise map_error_to_http(error)
     assert resultado is not None
+    # Invalidar caché del hilo tras crear un mensaje
+    await cache_recent.invalidate_thread(str(thread_id))
     return to_message_out(resultado)
 
 
@@ -126,6 +129,8 @@ async def update_message(
     if error is not None:
         raise map_error_to_http(error)
     assert resultado is not None
+    # Invalidar caché tras actualizar
+    await cache_recent.invalidate_thread(str(thread_id))
     return to_message_out(resultado)
 
 
@@ -143,6 +148,8 @@ async def delete_message(
     resultado, error = await Controller.DeleteMessage(thread_id, message_id, user_id)
     if error is not None:
         raise map_error_to_http(error)
+    # Invalidar caché tras eliminar
+    await cache_recent.invalidate_thread(str(thread_id))
     return None
 
 
@@ -156,9 +163,21 @@ async def list_messages(
     limit: int = Query(50, ge=1, le=200, description="Number of messages"),
 ):
     set_info(f"List messages thread={thread_id} limit={limit}")
-    # Compatibilidad con Controller.GetMessage (typeM=1 => por cantidad)
-    resultado, error = await Controller.GetMessage(thread_id, 1, str(limit))
+    # Cache-aside: intentar Redis para recientes si está dentro del tamaño máximo de caché
+    recent: Optional[List[dict]] = None
+    if limit <= cache_recent.CACHE_MAX_ITEMS:
+        recent = await cache_recent.get_recent_messages(str(thread_id), limit)
+    if recent is not None:
+        # Log: retorno desde caché
+        set_info(f"Cache hit thread={thread_id} items={len(recent)} limit={limit}")
+        return [to_message_out(r) for r in recent]
+
+    # Si no hay caché, consultar a la base de datos vía controlador
+    resultado, error = await Controller.ListMessages(thread_id, 1, str(limit))
     if error is not None:
         raise map_error_to_http(error)
     assert resultado is not None
+
+    # Poblar caché con hasta CACHE_MAX_ITEMS mensajes
+    await cache_recent.set_recent_messages(str(thread_id), resultado)
     return [to_message_out(r) for r in resultado]

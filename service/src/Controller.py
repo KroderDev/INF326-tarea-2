@@ -197,7 +197,7 @@ Tipos de llamada para gestionar:
 """
 
 
-async def GetMessage(
+async def ListMessages(
     thread: uuid.UUID,
     typeM: Optional[int],
     filtro: Optional[str],
