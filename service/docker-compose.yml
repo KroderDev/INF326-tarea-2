@@ -84,7 +84,7 @@ services:
                 condition: service_healthy
         volumes:
             - ./db/init-db.sh:/init-db.sh:ro
-        entrypoint: ["sh", "/init-db.sh"]
+        entrypoint: ["/bin/sh", "-c", "tr -d '\\r' < /init-db.sh | /bin/sh"]
 
     redis:
         image: redis:7-alpine

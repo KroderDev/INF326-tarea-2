@@ -7,10 +7,13 @@ DB_NAME="${DB_NAME:-messages_service}"
 
 export PGPASSWORD="${PGPASSWORD:-secret}"
 
-for i in $(seq 1 60); do
+# Wait for Postgres to become ready (max ~60s)
+i=0
+while [ "$i" -lt 60 ]; do
   if pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres >/dev/null 2>&1; then
     break
   fi
+  i=$((i + 1))
   sleep 1
 done
 
