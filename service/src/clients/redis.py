@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Optional, cast
 
 try:
     from redis import asyncio as redis_async
-except Exception:  # pragma: no cover - redis podría no estar instalado en tests
+except Exception:  # pragma: no cover
     redis_async = None  # type: ignore[assignment]
 
 if TYPE_CHECKING:
