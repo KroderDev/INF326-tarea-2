@@ -58,7 +58,7 @@ flowchart LR
 
 ### Eventos
 
-Nuevo mensaje
+- Nuevo mensaje: Encola en el contenedor de RabbitMQ, emula el funcionamiento del event bus, el mensaje completo en formato JSON. Con el fin de identificar el mensaje a traves de un topico, se le agrego el tag: `messages_service`.
 
 ---
 
