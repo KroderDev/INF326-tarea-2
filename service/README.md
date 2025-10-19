@@ -58,7 +58,7 @@ flowchart LR
 
 ### Eventos
 
-- Nuevo mensaje: Encola en el contenedor de RabbitMQ, emula el funcionamiento del event bus, el mensaje completo en formato JSON. Se agregan todos los elementos a una cola llamada: `messages_service`, la cual no considera tipicos en sus componenetes.
+- Nuevo mensaje: Encola en el contenedor de RabbitMQ, emula el funcionamiento del event bus, el mensaje completo en formato JSON. Se agregan todos los elementos a una cola llamada: `messages_service`, la cual no considera tipicos en sus componenetes. Por lo que a modo grafico queda lo siguiente en la cola `messages_service`: _{ topic:""; data: message}_
 
 ---
 
