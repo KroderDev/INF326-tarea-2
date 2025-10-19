@@ -68,4 +68,5 @@ Nuevo mensaje
 - Servicio `db-init` asegura la creación de `messages_service` incluso si el volumen ya existía.
 - Servicio `migrate` aplica las migraciones y la API espera a que termine exitosamente.
 
+[Video demostrativo](https://github.com/user-attachments/assets/f8fb30be-6f26-442f-b3a2-591879852cf2)
 
