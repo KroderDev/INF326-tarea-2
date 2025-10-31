@@ -4,6 +4,7 @@ import os
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
+import logging
 from clients.rabbitmq import SendEvent
 from db.sqlc import models as sqlc_models
 from db.sqlc.messages import (CREATE_MESSAGE, GET_MESSAGE_BY_ID_FOR_UPDATE,
@@ -57,13 +58,17 @@ async def CreateMessage(
                 raise Exception("No row returned when creating message")
             resultado = dict(row)
 
-        await _send_event_async(
+        evt_error = await _send_event_async(
             "CREATE",
             {
                 "tag": "messages_service",
                 "message": resultado,
             },
         )
+        if evt_error is not None:
+            logging.getLogger("API_logs").warning(
+                f"Queue publish failed tag=messages_service err={evt_error}"
+            )
     except Exception as e:
         error = e
 

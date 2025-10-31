@@ -60,6 +60,19 @@ flowchart LR
 
 - Nuevo mensaje: Encola en el contenedor de RabbitMQ, emula el funcionamiento del event bus, el mensaje completo en formato JSON. Se agregan todos los elementos a una cola llamada: `messages_service`, la cual no considera tipicos en sus componenetes. Por lo que a modo grafico queda lo siguiente en la cola `messages_service`: _{ topic:""; data: message}_
 
+#### Resiliencia (RabbitMQ opcional)
+
+- La publicación de eventos es best-effort: si RabbitMQ no está disponible, la API no falla la creación del mensaje. El error se registra en logs de `WARNING` y la operación principal continúa.
+- Variables de entorno relevantes:
+  - `QUEUE_ENABLED` (default `true`): habilita o no el intento de publicar en el broker.
+  - `QUEUE_HOST`, `QUEUE_PORT`, `QUEUE_USER`, `QUEUE_PASSWORD`: conexión al broker.
+  - `QUEUE_CONN_ATTEMPTS` (default `1`), `QUEUE_RETRY_DELAY` (default `0.2`), `QUEUE_SOCKET_TIMEOUT` (default `0.5`), `QUEUE_BLOCKED_TIMEOUT` (default `0.5`), `QUEUE_HEARTBEAT` (default `30`): límites para evitar bloquear la API.
+  - `QUEUE_OUTBOX_REDIS_ENABLED` (default `false`): si está `true` y falla la publicación, el evento se almacena en una lista de Redis como outbox para reintentos offline.
+  - `QUEUE_OUTBOX_REDIS_KEY` (default `outbox:rabbitmq:messages`): clave en Redis para el outbox.
+  - `QUEUE_OUTBOX_TTL_SECONDS` (default `0`): TTL opcional del outbox (0 = sin expiración).
+
+Sugerencia operativa: Ejecutar un worker/cron que drene el outbox de Redis y reintente publicar cuando RabbitMQ se recupere.
+
 ---
 
 ### Arranque con Docker Compose
