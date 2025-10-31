@@ -1,0 +1,29 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Docker login
+      uses: docker/login-action@v3
+      with:
+        registry: registry.kroder.dev
+        username: ${{ secrets.HARBOR_ROBOT_USER }}
+        password: ${{ secrets.HARBOR_ROBOT_TOKEN }}
+      
+    - name: Build & Push the Docker image
+      run: |
+          IMAGE=registry.kroder.dev/library/utfsm-chat-service:${{ github.sha }}
+          docker build -f Dockerfile -t $IMAGE .
+          docker push $IMAGE
