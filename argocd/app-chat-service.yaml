@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: utfsm-chat-service
+  namespace: argocd
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: chat=registry.kroder.dev/library/utfsm-chat-service
+    argocd-image-updater.argoproj.io/write-back-method: argocd
+    argocd-image-updater.argoproj.io/chat.update-strategy: newest-build
+    argocd-image-updater.argoproj.io/chat.kustomize.image-name: registry.kroder.dev/library/utfsm-chat-service
+    argocd-image-updater.argoproj.io/chat.pull-secret: pullsecret:argocd/argocd-regcred
+spec:
+  project: default
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+  source:
+    repoURL: https://github.com/KroderDev/INF326-tarea-2.git
+    targetRevision: main
+    path: argocd/chat-service
+    kustomize:
+      images:
+        - registry.kroder.dev/library/utfsm-chat-service:58d632e9189fbca8bb22d9e26c9f215eb5390e6e
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: utfsm
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
