@@ -12,3 +12,5 @@ resources:
   - postgres.yaml
   - redis.yaml
   - migrate-job.yaml
+  - networkpolicy-db.yaml
+  - networkpolicy-redis.yaml
