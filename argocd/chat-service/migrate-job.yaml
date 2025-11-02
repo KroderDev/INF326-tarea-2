@@ -5,8 +5,9 @@ metadata:
   namespace: utfsm
   annotations:
     argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
 spec:
-  ttlSecondsAfterFinished: 120
   backoffLimit: 3
   template:
     spec:
