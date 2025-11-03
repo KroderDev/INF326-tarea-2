@@ -4,8 +4,9 @@ import os
 import sys
 import uuid
 from pathlib import Path
-
+import logging.handlers as lh
 import pytest
+from fastapi.testclient import TestClient
 
 # Ensure imports find service modules (db/, src/)
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,8 +31,6 @@ class _DummyHandler(logging.Handler):
 @pytest.fixture()
 def api_module(monkeypatch):
     # Evita escribir logs en disco durante tests
-    import logging.handlers as lh
-
     monkeypatch.setattr(lh, "RotatingFileHandler", _DummyHandler)
     monkeypatch.setattr(os, "makedirs", lambda *a, **k: None)
 
@@ -56,7 +55,6 @@ def _fake_message_row(thread_id: uuid.UUID, user_id: uuid.UUID) -> dict:
 
 
 def test_create_message_success(api_module, monkeypatch):
-    from fastapi.testclient import TestClient
 
     async def _create(thread, user, content, typeM, path):
         return _fake_message_row(thread, user), None
@@ -79,7 +77,6 @@ def test_create_message_success(api_module, monkeypatch):
 
 
 def test_create_message_error_maps_500(api_module, monkeypatch):
-    from fastapi.testclient import TestClient
 
     async def _create(thread, user, content, typeM, path):
         return None, Exception("boom")
@@ -99,7 +96,6 @@ def test_create_message_error_maps_500(api_module, monkeypatch):
 
 
 def test_update_message_success(api_module, monkeypatch):
-    from fastapi.testclient import TestClient
 
     async def _update(thread, message, user, content, typeM, path):
         return (
@@ -125,7 +121,6 @@ def test_update_message_success(api_module, monkeypatch):
 
 
 def test_update_message_not_found_maps_404(api_module, monkeypatch):
-    from fastapi.testclient import TestClient
 
     async def _update(thread, message, user, content, typeM, path):
         return None, Exception("No row returned when updating message")
@@ -145,7 +140,6 @@ def test_update_message_not_found_maps_404(api_module, monkeypatch):
 
 
 def test_delete_message_success_204(api_module, monkeypatch):
-    from fastapi.testclient import TestClient
 
     async def _delete(thread, message, user):
         return {"ok": True}, None
@@ -162,7 +156,6 @@ def test_delete_message_success_204(api_module, monkeypatch):
 
 
 def test_delete_message_not_found_maps_404(api_module, monkeypatch):
-    from fastapi.testclient import TestClient
 
     async def _delete(thread, message, user):
         return None, Exception("No row returned when deleting message")
@@ -178,7 +171,6 @@ def test_delete_message_not_found_maps_404(api_module, monkeypatch):
 
 
 def test_list_messages_success(api_module, monkeypatch):
-    from fastapi.testclient import TestClient
 
     out = [_fake_message_row(uuid.uuid4(), uuid.uuid4())]
 
