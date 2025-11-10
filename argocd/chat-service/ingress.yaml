@@ -10,10 +10,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - chat-utfsm.kroder.dev
-      secretName: chat-utfsm-kroder-dev-tls
+        - chat-service.inf326.cl
+      secretName: chat-service-inf326-cl-tls
   rules:
-    - host: chat-utfsm.kroder.dev
+    - host: chat-service.inf326.cl
       http:
         paths:
           - path: /
