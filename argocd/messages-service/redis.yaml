@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: chat-redis
+  name: messages-redis
   labels:
     app.kubernetes.io/name: redis
     app.kubernetes.io/part-of: utfsm
@@ -19,14 +19,14 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: chat-redis
+  name: messages-redis
   labels:
     app.kubernetes.io/name: redis
     app.kubernetes.io/part-of: utfsm
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  serviceName: chat-redis
+  serviceName: messages-redis
   replicas: 1
   selector:
     matchLabels:

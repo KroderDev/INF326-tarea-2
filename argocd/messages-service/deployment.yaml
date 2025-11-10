@@ -24,7 +24,7 @@ spec:
         fsGroup: 10001
       containers:
         - name: api
-          image: registry.kroder.dev/utfsm/messages-service:da9065f37eb34eb47dabc3511ba8d2106920394e
+          image: registry.kroder.dev/utfsm/messages-service:1ae0abb11d5b1a36b107b5d5c4b9a9c34deeb7c1
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

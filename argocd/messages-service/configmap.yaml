@@ -6,7 +6,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
 data:
   # Database
-  DB_HOST: "chat-database"
+  DB_HOST: "messages-database"
   DB_PORT: "5432"
   DB_USER: "root"
   DB_NAME: "messages_service"
@@ -16,7 +16,7 @@ data:
   CACHE_TTL_SECONDS: "120"
   CACHE_MAX_ITEMS: "200"
   CACHE_TOUCH_ON_HIT: "true"
-  REDIS_HOST: "chat-redis"
+  REDIS_HOST: "messages-redis"
   REDIS_PORT: "6379"
   REDIS_DB: "0"
 

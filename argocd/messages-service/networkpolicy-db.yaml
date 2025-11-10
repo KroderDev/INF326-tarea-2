@@ -7,7 +7,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: database
+      app.kubernetes.io/name: messages-database
   policyTypes:
     - Ingress
   ingress:
