@@ -2,7 +2,6 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: chat-service
-  namespace: utfsm
   annotations:
     argocd.argoproj.io/sync-wave: "6"
 spec:

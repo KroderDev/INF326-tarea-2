@@ -1,8 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: database
-  namespace: utfsm
+  name: chat-database
   labels:
     app.kubernetes.io/name: database
     app.kubernetes.io/part-of: utfsm
@@ -20,15 +19,14 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: database
-  namespace: utfsm
+  name: chat-database
   labels:
     app.kubernetes.io/name: database
     app.kubernetes.io/part-of: utfsm
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  serviceName: database
+  serviceName: chat-database
   replicas: 1
   selector:
     matchLabels:
@@ -91,7 +89,7 @@ spec:
         name: pgdata
       spec:
         accessModes: ["ReadWriteOnce"]
-        storageClassName: longhorn-static
+        storageClassName: do-block-storage
         resources:
           requests:
             storage: 512Mi

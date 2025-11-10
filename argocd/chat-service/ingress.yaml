@@ -2,13 +2,12 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: chat-service
-  namespace: utfsm
   annotations:
     argocd.argoproj.io/sync-wave: "6"
-    cert-manager.io/cluster-issuer: letsencrypt
+    cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
-  ingressClassName: public
+  ingressClassName: nginx
   tls:
     - hosts:
         - chat-utfsm.kroder.dev

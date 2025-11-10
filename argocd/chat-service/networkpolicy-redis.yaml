@@ -2,7 +2,6 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-redis-from-chat-service
-  namespace: utfsm
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
@@ -19,4 +18,3 @@ spec:
       ports:
         - protocol: TCP
           port: 6379
-

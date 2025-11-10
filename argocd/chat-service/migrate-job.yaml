@@ -2,7 +2,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: chat-service-migrate
-  namespace: utfsm
   annotations:
     argocd.argoproj.io/sync-wave: "4"
     argocd.argoproj.io/hook: Sync
@@ -11,8 +10,6 @@ spec:
   backoffLimit: 3
   template:
     spec:
-      imagePullSecrets:
-        - name: argocd-regcred
       restartPolicy: OnFailure
       initContainers:
         - name: wait-for-db
@@ -34,7 +31,7 @@ spec:
                   name: chat-service-secrets
                   key: DB_PASSWORD
         - name: copy-migrations
-          image: registry.kroder.dev/library/utfsm-chat-service:latest
+          image: registry.kroder.dev/utfsm/chat-service:da9065f37eb34eb47dabc3511ba8d2106920394e
           command:
             - /bin/sh
             - -c

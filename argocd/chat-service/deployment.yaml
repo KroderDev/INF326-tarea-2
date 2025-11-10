@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: chat-service
-  namespace: utfsm
   labels:
     app.kubernetes.io/name: chat-service
     app.kubernetes.io/part-of: utfsm
@@ -19,15 +18,13 @@ spec:
         app.kubernetes.io/name: chat-service
         app.kubernetes.io/part-of: utfsm
     spec:
-      imagePullSecrets:
-        - name: argocd-regcred
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
         fsGroup: 10001
       containers:
         - name: api
-          image: registry.kroder.dev/library/utfsm-chat-service:latest
+          image: registry.kroder.dev/utfsm/chat-service:da9065f37eb34eb47dabc3511ba8d2106920394e
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
