@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: chat-service-migrate
+  name: messages-service-migrate
   annotations:
     argocd.argoproj.io/sync-wave: "4"
     argocd.argoproj.io/hook: Sync
@@ -21,17 +21,17 @@ spec:
               until pg_isready -h ${DB_HOST:-database} -p ${DB_PORT:-5432} -U ${DB_USER:-root}; do echo waiting for database; sleep 2; done
           envFrom:
             - configMapRef:
-                name: chat-service-config
+                name: messages-service-config
             - secretRef:
-                name: chat-service-secrets
+                name: messages-service-secrets
           env:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: chat-service-secrets
+                  name: messages-service-secrets
                   key: DB_PASSWORD
         - name: copy-migrations
-          image: registry.kroder.dev/utfsm/chat-service:da9065f37eb34eb47dabc3511ba8d2106920394e
+          image: registry.kroder.dev/utfsm/messages-service:da9065f37eb34eb47dabc3511ba8d2106920394e
           command:
             - /bin/sh
             - -c
@@ -50,9 +50,9 @@ spec:
               /migrate -path=/work/migrations -database postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable up || true
           envFrom:
             - configMapRef:
-                name: chat-service-config
+                name: messages-service-config
             - secretRef:
-                name: chat-service-secrets
+                name: messages-service-secrets
           volumeMounts:
             - name: workdir
               mountPath: /work

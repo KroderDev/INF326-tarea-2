@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chat-service
+  name: messages-service
   labels:
-    app.kubernetes.io/name: chat-service
+    app.kubernetes.io/name: messages-service
     app.kubernetes.io/part-of: utfsm
   annotations:
     argocd.argoproj.io/sync-wave: "5"
@@ -11,11 +11,11 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app.kubernetes.io/name: chat-service
+      app.kubernetes.io/name: messages-service
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: chat-service
+        app.kubernetes.io/name: messages-service
         app.kubernetes.io/part-of: utfsm
     spec:
       securityContext:
@@ -24,7 +24,7 @@ spec:
         fsGroup: 10001
       containers:
         - name: api
-          image: registry.kroder.dev/utfsm/chat-service:da9065f37eb34eb47dabc3511ba8d2106920394e
+          image: registry.kroder.dev/utfsm/messages-service:da9065f37eb34eb47dabc3511ba8d2106920394e
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -33,9 +33,9 @@ spec:
             allowPrivilegeEscalation: false
           envFrom:
             - configMapRef:
-                name: chat-service-config
+                name: messages-service-config
             - secretRef:
-                name: chat-service-secrets
+                name: messages-service-secrets
           readinessProbe:
             httpGet:
               path: /docs
@@ -70,4 +70,4 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app.kubernetes.io/name: chat-service
+              app.kubernetes.io/name: messages-service

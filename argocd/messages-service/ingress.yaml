@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: messages-service
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - messages-service.inf326.cl
+      secretName: messages-service-inf326-cl-tls
+    - hosts:
+        - messages-service.kroder.dev
+      secretName: messages-service-kroder-dev-tls
+  rules:
+    - host: messages-service.inf326.cl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: messages-service
+                port:
+                  number: 80
+    - host: messages-service.kroder.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: messages-service
+                port:
+                  number: 80

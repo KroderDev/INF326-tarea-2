@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-redis-from-chat-service
+  name: allow-redis-from-messages-service
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
@@ -14,7 +14,7 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: chat-service
+              app.kubernetes.io/name: messages-service
       ports:
         - protocol: TCP
           port: 6379

@@ -1,11 +1,11 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: chat-service
+  name: messages-service
   annotations:
     argocd.argoproj.io/sync-wave: "6"
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: chat-service
+      app.kubernetes.io/name: messages-service

@@ -24,6 +24,6 @@ jobs:
       
     - name: Build & Push the Docker image
       run: |
-          IMAGE=registry.kroder.dev/utfsm/chat-service:${{ github.sha }}
+          IMAGE=registry.kroder.dev/utfsm/messages-service:${{ github.sha }}
           docker build -f service/Dockerfile -t $IMAGE service
           docker push $IMAGE
