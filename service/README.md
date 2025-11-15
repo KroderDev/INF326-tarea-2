@@ -1,6 +1,6 @@
 # Proyecto Arquitectura de Software
 
-## Microservicio: [Mensajes](https://github.com/KroderDev/INF326-tarea-2/blob/4b0a2607ba41b16b66e1b98ac9284e55ed72682f/.docs/message.svg)
+## Microservicio: [Mensajes](../docs/message.svg)
 
 ### Flujo del microservicio
 

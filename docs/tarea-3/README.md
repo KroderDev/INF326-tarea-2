@@ -28,14 +28,14 @@ Se requiere implementar un sistema que permita el desarrollo de la comunidad uni
 
 ## Módulos
 
-- [Autenticación de usuario](.docs/Auth.md)
-- [Descubrimiento de comunidades](.docs/Discovery.md)
-- [Comunidades](.docs/Comunidades.md)
-- [Calendario (Externo)](.docs/Calendar.md)
-- [Asistente](.docs/Asistente.md)
-- [Automatización](.docs/Automatización.md)
-- [Chat](.docs/Chat.md)
-- [Avisos](.docs/Avisos.md)
+- [Autenticación de usuario](./Auth.md)
+- [Descubrimiento de comunidades](./Discovery.md)
+- [Comunidades](./Comunidades.md)
+- [Calendario (Externo)](./Calendar.md)
+- [Asistente](./Asistente.md)
+- [Automatización](./Automatización.md)
+- [Chat](./Chat.md)
+- [Avisos](./Avisos.md)
 ## Diagrama de arquitectura general
 
 ### Vista rápida
