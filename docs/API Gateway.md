@@ -1,6 +1,6 @@
 # API Gateway
 
-El borde del sistema se resuelve con **Kong** en modo estático (DB-less). Toda la configuración vive en `argocd/api-gateway/kong.yml` y se aplica vía `kubectl/argocd` usando el `kustomization` del mismo directorio.
+El borde del sistema se resuelve con **Kong** en modo estático (DB-less). Toda la configuración vive en `deployment/api-gateway/kong.yml` y se aplica vía `kubectl/argocd` usando el `kustomization` del mismo directorio.
 
 ## Rutas versionadas
 
@@ -19,4 +19,3 @@ El borde del sistema se resuelve con **Kong** en modo estático (DB-less). Toda 
 | 11: Chatbot Cálculo | *(pendiente)* | *(pendiente)* | Pendiente |
 | 12: Chatbot Wikipedia | `/chatbot-wikipedia` | `wikipedia-chatbot-service` | Activo |
 | 13: Chatbot Programación | `/chatbot-programming` | `chatbot-programming-service` | Activo |
-

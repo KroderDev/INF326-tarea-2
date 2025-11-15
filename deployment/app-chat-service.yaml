@@ -19,7 +19,7 @@ spec:
   source:
     repoURL: https://github.com/KroderDev/INF326-tarea-2.git
     targetRevision: main
-    path: argocd/chat-service
+    path: deployment/chat-service
     kustomize:
       images:
         - registry.kroder.dev/library/utfsm-chat-service:58d632e9189fbca8bb22d9e26c9f215eb5390e6e
