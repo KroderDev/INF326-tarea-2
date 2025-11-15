@@ -1,4 +1,4 @@
-# API Gateway (Kong)
+# API Gateway
 
 El borde del sistema se resuelve con **Kong** en modo estático (DB-less). Toda la configuración vive en `argocd/api-gateway/kong.yml` y se aplica vía `kubectl/argocd` usando el `kustomization` del mismo directorio.
 
