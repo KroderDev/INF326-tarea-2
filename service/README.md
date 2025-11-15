@@ -8,27 +8,36 @@
 ---
 config:
   layout: elk
-  look: classic
-  theme: neo-dark
+  look: neo
+  theme: redux-dark
 ---
 flowchart LR
- subgraph s1["Message Service"]
-        n1["Controller"]
-        n3["Redis Cache"]
-        n5["Postgres"]
+ subgraph EDGE["Edge"]
+        APIGW["API Gateway"]
   end
- subgraph s2["Edge"]
-        n6["API"]
+ subgraph MessagesService["Messages Service"]
+        MSPod["Service API"]
+        MSRedis["Redis Cache"]
+        MSPostgres["Postgres"]
   end
- subgraph s4["Infra"]
-        n8["Event BUS"]
+ subgraph Infra["Infra"]
+        BUS["Event BUS"]
   end
-    s2 L_s2_n1_0@--> n1
-    n1 --> n5 & n3 & n8
-    n3@{ shape: db}
-    n5@{ shape: db}
-    L_s2_n1_0@{ animation: slow } 
-    L_n1_n8_0@{ animation: slow }
+    APIGW L_APIGW_MSPod_0@--> MSPod
+    MSPod L_MSPod_MSRedis_0@<--> MSRedis & MSPostgres
+    MSPod L_MSPod_BUS_0@-.-> BUS
+    MSRedis@{ shape: db}
+    MSPostgres@{ shape: db}
+    style EDGE stroke:#FFFFFF
+    linkStyle 0 stroke:#FFFFFF,fill:none
+    linkStyle 1 stroke:#FFFFFF,fill:none
+    linkStyle 2 stroke:#FFFFFF,fill:none
+    linkStyle 3 stroke:#FFFFFF,fill:none
+    L_APIGW_MSPod_0@{ animation: fast } 
+    L_MSPod_MSRedis_0@{ animation: fast } 
+    L_MSPod_MSPostgres_0@{ animation: slow } 
+    L_MSPod_BUS_0@{ animation: slow }
+
 ```
 > [!NOTE]
 > En el caso del almacenamiento de los chats se opto por lo siguiente: Se mantiene una tabla con todos los mensajes existentes, indexando por hilo para que se agrupen y favorecer la eficiencia de las consultas (Base de datos relacional). A su vez con el fin de agilizar las consultas de mensajes tendremos una BD en memoria, lo cual reducira el tiempo en consultas a chats de alto flujo y optimizara el uso de la base de datos principal. Mencionar que el flujo mencionado sera gestionado por el controlador.
