@@ -13,31 +13,48 @@ config:
 flowchart LR
  subgraph EDGE["Edge"]
         UI["Web/Mobile App"]
-        APIGW["API Gateway (Kong)"]
   end
  subgraph MessagesService["Messages Service"]
-        MSPod["Service"]
+        MSPod["Service API"]
         MSRedis["Redis Cache"]
         MSPostgres["Postgres"]
   end
  subgraph Infra["Infra"]
         BUS["Event BUS"]
   end
+ subgraph OtherServices["Other Services"]
+        OSPod["Service API"]
+        OSDatabase["Database/Cache"]
+  end
+ subgraph Cluster["Cluster"]
+        APIGW["API Gateway (Kong)"]
+        MessagesService
+        Infra
+        OtherServices
+  end
     UI L_UI_APIGW_0@--> APIGW
-    APIGW L_APIGW_MSPod_0@--> MSPod
-    MSPod --- MSRedis & MSPostgres
+    APIGW L_APIGW_MSPod_0@--> MSPod & OSPod
+    MSPod L_MSPod_MSRedis_0@<--> MSRedis & MSPostgres
     MSPod L_MSPod_BUS_0@-.-> BUS
-    MSRedis@{ shape: cyl}
-    MSPostgres@{ shape: cyl}
+    OSPod L_OSPod_OSDatabase_0@<--> OSDatabase & BUS
+    MSRedis@{ shape: db}
+    MSPostgres@{ shape: db}
+    OSDatabase@{ shape: db}
     style EDGE stroke:#FFFFFF
+    style Cluster stroke:#BBDEFB
     linkStyle 0 stroke:#FFFFFF,fill:none
     linkStyle 1 stroke:#FFFFFF,fill:none
-    linkStyle 2 stroke:#E1BEE7,fill:none
-    linkStyle 3 stroke:#E1BEE7,fill:none
-    linkStyle 4 stroke:#E1BEE7,fill:none
+    linkStyle 3 stroke:#FFFFFF,fill:none
+    linkStyle 4 stroke:#FFFFFF,fill:none
+    linkStyle 5 stroke:#FFFFFF,fill:none
     L_UI_APIGW_0@{ animation: fast } 
     L_APIGW_MSPod_0@{ animation: fast } 
-    L_MSPod_BUS_0@{ animation: slow }
+    L_APIGW_OSPod_0@{ animation: fast } 
+    L_MSPod_MSRedis_0@{ animation: fast } 
+    L_MSPod_MSPostgres_0@{ animation: slow } 
+    L_MSPod_BUS_0@{ animation: slow } 
+    L_OSPod_OSDatabase_0@{ animation: fast } 
+    L_OSPod_BUS_0@{ animation: slow }
 
 ```
 
