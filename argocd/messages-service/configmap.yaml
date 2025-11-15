@@ -21,6 +21,6 @@ data:
   REDIS_DB: "0"
 
   # RabbitMQ queue
-  QUEUE_HOST: "rabbitmq"
+  QUEUE_HOST: "message-broker"
   QUEUE_PORT: "5672"
   QUEUE_USER: "root"
