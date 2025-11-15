@@ -1,10 +1,10 @@
 import asyncio
 import datetime
+import logging
 import os
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
-import logging
 from clients.rabbitmq import SendEvent
 from db.sqlc import models as sqlc_models
 from db.sqlc.messages import (CREATE_MESSAGE, GET_MESSAGE_BY_ID_FOR_UPDATE,

@@ -28,9 +28,7 @@ def _queue_params() -> Dict[str, Any]:
         "connection_attempts": int(os.getenv("QUEUE_CONN_ATTEMPTS", "1")),
         "retry_delay": float(os.getenv("QUEUE_RETRY_DELAY", "0.2")),
         "socket_timeout": float(os.getenv("QUEUE_SOCKET_TIMEOUT", "0.5")),
-        "blocked_connection_timeout": float(
-            os.getenv("QUEUE_BLOCKED_TIMEOUT", "0.5")
-        ),
+        "blocked_connection_timeout": float(os.getenv("QUEUE_BLOCKED_TIMEOUT", "0.5")),
         "heartbeat": int(os.getenv("QUEUE_HEARTBEAT", "30")),
     }
 
