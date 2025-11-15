@@ -1,0 +1,214 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: users-service
+    host: users-service.default.svc.cluster.local
+    port: 80
+    protocol: http
+    routes:
+      - name: users-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /users
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - users
+
+  - name: channel-api-service
+    host: channel-api-service.default.svc.cluster.local
+    port: 8000
+    protocol: http
+    routes:
+      - name: channels-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /channels
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - channels
+
+  - name: threads-service
+    host: threads-service.default.svc.cluster.local
+    port: 80
+    protocol: http
+    routes:
+      - name: threads-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /threads
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - threads
+
+  - name: messages-service
+    host: messages-service.default.svc.cluster.local
+    port: 80
+    protocol: http
+    routes:
+      - name: messages-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /messages
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - messages
+
+  - name: presence-service
+    host: presence-service.default.svc.cluster.local
+    port: 80
+    protocol: http
+    routes:
+      - name: presence-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /presence
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - presence
+
+  - name: moderation-service
+    host: moderation-service.default.svc.cluster.local
+    port: 8000
+    protocol: http
+    routes:
+      - name: moderation-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /moderation
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - moderation
+
+  - name: search-service
+    host: search-service.default.svc.cluster.local
+    port: 8000
+    protocol: http
+    routes:
+      - name: search-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /search
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - search
+
+  - name: ia-chatbot-programacion
+    host: ia-chatbot-programacion.default.svc.cluster.local
+    port: 5000
+    protocol: http
+    routes:
+      - name: chatbot-academico-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /chatbot-academico
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - chatbot
+
+  - name: chatbot-programming-service
+    host: chatbot-programming-service.default.svc.cluster.local
+    port: 80
+    protocol: http
+    routes:
+      - name: chatbot-programming-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /chatbot-programming
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - chatbot
+
+  - name: wikipedia-chatbot-service
+    host: wikipedia-chatbot-service.default.svc.cluster.local
+    port: 9001
+    protocol: http
+    routes:
+      - name: chatbot-wikipedia-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /chatbot-wikipedia
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - chatbot
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - https://app.inf326.cl
+        - https://app.kroder.dev
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Authorization
+        - Content-Type
+        - X-User-Id
+        - X-Request-Id
+      exposed_headers:
+        - X-Request-Id
+        - X-RateLimit-Limit
+        - X-RateLimit-Remaining
+      credentials: true
+      max_age: 300
+
+  - name: correlation-id
+    config:
+      header_name: X-Request-Id
+      generator: uuid
+      echo_downstream: true
+
+  - name: prometheus
+
+  - name: rate-limiting
+    config:
+      minute: 600
+      policy: local
+      limit_by: ip
+      fault_tolerant: true
+      hide_client_headers: false
