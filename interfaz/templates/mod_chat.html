@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Chats{% endblock %}
+
+{% block styles %}
+<style>
+  :root {
+    --bg:#f5f7fb;
+    --card:#fff;
+    --muted:#6b7280;
+    --accent:#2563eb;
+    --danger:#dc2626;
+  }
+
+  body {
+    font-family:Inter,system-ui,Arial,sans-serif;
+    background:var(--bg);
+    margin:0;
+  }
+
+  .chat-container{
+    max-width:560px;
+    margin:40px auto;
+    padding:0 20px;
+  }
+
+  /* --- TARJETA --- */
+  .chat-card {
+    background:var(--card);
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 4px 20px rgba(16,24,40,.08);
+  }
+
+  .chat-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+  }
+
+  .chat-name {
+    font-size:1.2rem;
+    font-weight:600;
+  }
+
+  .delete-btn {
+    background:var(--danger);
+    color:white;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:0.9rem;
+    transition:0.15s;
+  }
+
+  .delete-btn:hover {
+    background:#b91c1c;
+  }
+
+  /* Formulario de renombrar */
+
+  .error{
+    background:#fff1f0;color:#991b1b;border:1px solid #fecaca;
+    padding:10px;border-radius:8px;margin-bottom:12px
+  }
+
+.rename-form {
+  display:flex;
+  flex-direction:column;     /* <-- Botón debajo */
+  gap:10px;
+  margin-top:10px;
+}
+
+.rename-form input {
+  width:50%;                 /* <-- Más pequeño */
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:6px 10px;
+  font-size:0.95rem;
+}
+
+.rename-submit {
+  background:var(--accent);
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  width:30%;                 /* <-- Botón más pequeño y centrado */
+  font-size:0.9rem;
+  align-self:flex-start;     /* <-- Alineado a la izquierda */
+}
+
+.rename-submit:hover {
+  background:#1e4fc9;
+}
+
+.channel-type-select {
+  width:50%;
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:6px 10px;
+  font-size:0.95rem;
+  background:white;
+}
+.add-btn {
+  background: #16a34a; /* verde */
+}
+
+.add-btn:hover {
+  background: #15803d; /* verde oscuro */
+}
+
+.delete-btn-inline {
+  background: #dc2626; /* rojo */
+}
+
+.delete-btn-inline:hover {
+  background: #b91c1c; /* rojo oscuro */
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="chat-container">
+  <h2>💡Crea tu canal</h2>
+  {% if Err_create %}
+    <p class="error">Error creando el canal. {{ Err_del }}</p>
+  {% endif %}
+  <div class="chat-card">
+
+    <form method="POST" class="rename-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="create">
+
+    <input type="text" name="new_name" placeholder="Nombre" required>
+
+    <select name="new_type" class="channel-type-select">
+        <option value="public">Público</option>
+        <option value="private">Privado</option>
+    </select>
+
+    <button class="rename-submit" type="submit">Guardar</button>
+    </form>
+  </div>
+</div>
+
+<div class="chat-container">
+  <h2>🛠️Mis canales</h2>
+  {% if Err_mod %}
+    <p class="error">Error modificando el canal. {{ Err_mod }}</p>
+  {% endif %}
+  {% if Err_del %}
+    <p class="error">Error eliminando el canal. {{ Err_del }}</p>
+  {% endif %}
+  {% if Err_add %}
+    <p class="error">Error agregando usuario. {{ Err_add }}</p>
+  {% endif %}
+  {% if Err_del_u %}
+    <p class="error">Error eliminando usuario. {{ Err_del_u }}</p>
+  {% endif %}
+  {% for chat in Chats %}
+  
+  <div class="chat-card">
+
+    <!-- ENCABEZADO: Nombre + Botón eliminar -->
+    <div class="chat-header">
+      <span class="chat-name">{{ chat }}</span>
+
+      <form method="POST" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="chat" value="{{ chat }}">
+        <input type="hidden" name="action" value="delete">
+        <button class="delete-btn" type="submit">Eliminar</button>
+      </form>
+    </div>
+
+    <!-- FORM DE RENOMBRAR -->
+    <form method="POST" class="rename-form">
+    {% csrf_token %}
+    <input type="hidden" name="chat" value="{{ chat }}">
+    <input type="hidden" name="action" value="rename">
+
+    <input type="text" name="new_name" placeholder="Nuevo nombre..." required>
+
+    <!-- Selector Público / Privado -->
+    <select name="new_type" class="channel-type-select">
+        <option value="public">Público</option>
+        <option value="private">Privado</option>
+    </select>
+
+    <!-- Botón Guardar -->
+    <button class="rename-submit" type="submit">Cambiar</button>
+    </form>
+    <br>
+
+  <form method="POST" class="rename-form">
+    {% csrf_token %}
+    <input type="hidden" name="chat" value="{{ chat }}">
+
+    <input type="text" name="user_id" placeholder="ID usuario" required>
+
+    <div style="display:flex; gap:10px; margin-top:6px;">
+      <button type="submit" name="action" value="add_user" class="rename-submit add-btn">Agregar</button>
+      <button type="submit" name="action" value="remove_user" class="rename-submit delete-btn-inline">Eliminar</button>
+    </div>
+  </form>
+  </div>
+
+  {% empty %}
+    <p style="color:var(--muted);text-align:center;">No hay chats disponibles.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

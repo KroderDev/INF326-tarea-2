@@ -1,0 +1,116 @@
+{% extends "baseHome.html" %}
+
+{% block title %}Iniciar sesión{% endblock %}
+
+{% block styles %}
+<style>
+  :root{--bg:#f5f7fb;--card:#fff;--muted:#6b7280;--accent:#2563eb}
+
+  body{
+    font-family:Inter,system-ui,Arial,sans-serif;
+    background:var(--bg);
+    margin:0;
+  }
+
+  .page-center{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+  }
+
+  /* contenedor que envuelve la flecha + card */
+  .card-wrap{
+    width:100%;
+    max-width:420px;      /* mismo ancho que .card */
+    margin:0 20px;        /* margen lateral igual que antes */
+  }
+
+  /* Flecha encima de la card, alineada a la izquierda del recuadro */
+  .back-above{
+    display:inline-block;
+    margin-bottom:10px;   /* separación sobre la card */
+    color:var(--accent);
+    text-decoration:none;
+    font-size:1rem;
+    font-weight:600;
+  }
+
+  /* Si prefieres la flecha centrada sobre la card, usa esta clase (comentada) */
+  /* .back-above { display:block; text-align:center; margin-bottom:12px; } */
+
+  .card{
+    background:var(--card);
+    width:100%;
+    padding:28px;
+    border-radius:12px;
+    box-shadow:0 6px 30px rgba(16,24,40,.08);
+  }
+
+  h1{margin:0 0 8px;font-size:1.4rem}
+  p.lead{margin:0 0 18px;color:var(--muted);font-size:.95rem}
+  .field{margin-bottom:14px}
+  label{display:block;font-size:.85rem;margin-bottom:6px;color:#374151}
+  input[type="text"],input[type="password"]{
+    width:100%;padding:10px 12px;border:1px solid #e6e9ef;
+    border-radius:8px;font-size:0.95rem
+  }
+  button{
+    width:100%;padding:10px 12px;border-radius:8px;border:0;
+    background:var(--accent);color:white;font-weight:600;cursor:pointer
+  }
+  .error{
+    background:#fff1f0;color:#991b1b;border:1px solid #fecaca;
+    padding:10px;border-radius:8px;margin-bottom:12px
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-center">
+
+  <!-- Wrapping container que controla ancho y alineación -->
+  <div class="card-wrap">
+
+    <!-- FLECHA: justo encima de la tarjeta -->
+    <a href="{% url 'home' %}" class="back-above" aria-label="Volver a home">← Volver</a>
+    <!-- Si prefieres ícono SVG pequeño en vez de la flecha unicode, puedo cambiarlo -->
+
+    <main class="card" role="main">
+
+        <h1>Nueva sesión</h1>
+        <p class="lead">Crea tu usuario y contraseña.</p>
+
+      {% if err %}
+        <p class="error">Error al poner las credenciales, intente de nuevo.</p>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input id="email" name="email" type="text" required>
+        </div>
+
+        <div class="field">
+          <label for="username">Usuario</label>
+          <input id="username" name="username" type="text" required>
+        </div>
+
+        <div class="field">
+          <label for="fullname">Nombre completo</label>
+          <input id="fullname" name="fullname" type="text" required>
+        </div>
+
+        <div class="field">
+          <label for="password">Contraseña</label>
+          <input id="password" name="password" type="password" required>
+        </div>
+
+        <button type="submit">Crear</button>
+      </form>
+
+    </main>
+  </div>
+</div>
+{% endblock %}

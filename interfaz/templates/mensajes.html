@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Chat{% endblock %}
+
+{% block styles %}
+<style>
+  :root{
+    --bg:#f5f7fb;
+    --card:#fff;
+    --muted:#6b7280;
+    --accent:#2563eb;
+  }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body{
+    font-family:Inter,system-ui,Arial,sans-serif;
+    background:var(--bg);
+  }
+
+  .chat-wrapper{
+    max-width:620px;
+    margin:0 auto;
+    padding:20px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  h1, h3 {
+    text-align: center;
+    margin: 0 0 8px 0;
+  }
+
+  h3{
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* Contenedor del chat: menos alto que toda la pantalla */
+  .messages-box{
+    background:var(--card);
+    border-radius:12px;
+    padding:20px;
+    box-shadow:0 4px 20px rgba(16,24,40,.08);
+    height: 60vh; /* más pequeño que antes */
+    overflow-y:auto;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+  }
+
+  .msg{
+    margin-bottom:18px;
+    display:flex;
+    flex-direction:column;
+    max-width:80%;
+  }
+  
+  .msg.you{
+    align-self:flex-end;
+    text-align:right;
+  }
+  
+  .msg.other{
+    align-self:flex-start;
+  }
+
+  .msg .sender{
+    font-size:0.85rem;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+
+  .msg .bubble{
+    background:#e1e8f7;
+    padding:12px 15px;
+    border-radius:14px;
+    font-size:0.95rem;
+    line-height:1.42;
+    white-space:pre-wrap;
+  }
+
+  .msg.you .bubble{
+    background:var(--accent);
+    color:white;
+  }
+
+  .send-box{
+    display:flex;
+    gap:10px;
+  }
+
+  .send-box input{
+    flex:1;
+    padding:14px 16px;
+    font-size:1rem;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+  }
+
+  .send-box button{
+    padding:0 18px;
+    background:var(--accent);
+    color:white;
+    border:0;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:1rem;
+    transition:.15s;
+  }
+
+  .send-box button:hover{
+    opacity:.9;
+    transform:translateY(-1px);
+  }
+  .msg .timestamp {
+      font-size: 0.7rem;
+      color: #9ca3af; /* gris claro */
+      align-self: flex-end;
+      margin-top: 4px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="chat-wrapper">
+  <h1>CHAT</h1>
+  <h3>{{ request.session.user }}</h3>
+
+  <div class="messages-box" id="messages-box">
+    {% for m in mensajes %}
+        <div class="msg {% if m.user == current_user_id %}you{% else %}other{% endif %}">
+            <span class="sender">{{ m.user }}</span>
+            <div class="bubble">{{ m.texto }}</div>
+            <div class="timestamp">{{ m.date }}</div>
+        </div>
+    {% endfor %}
+  </div>
+
+  <form method="POST" class="send-box">
+    {% csrf_token %}
+    <input type="text" name="mensaje" placeholder="Escribe un mensaje..." required>
+    <button type="submit">Enviar</button>
+  </form>
+</div>
+
+<script>
+// Auto-scroll al final
+const box = document.getElementById("messages-box");
+if (box) box.scrollTop = box.scrollHeight;
+
+// Refrescar cada 3 segundos
+setInterval(() => {
+    location.reload();
+}, 3000);
+</script>
+
+{% endblock %}

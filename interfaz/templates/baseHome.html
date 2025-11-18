@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}HOLA{% endblock %}</title>
+
+  {# Bloque para estilos específicos de cada plantilla #}
+  {% block styles %}{% endblock %}
+</head>
+<body>
+
+    {% include "navbarHome.html" %}  
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>
