@@ -1,0 +1,7 @@
+{% for m in mensajes %}
+    <div class="msg {% if m.user == current_user_id %}you{% else %}other{% endif %}">
+        <span class="sender">{{ m.user }}</span>
+        <div class="bubble">{{ m.texto }}</div>
+        <div class="timestamp">{{ m.date }}</div>
+    </div>
+{% endfor %}

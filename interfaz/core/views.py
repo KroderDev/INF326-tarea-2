@@ -263,43 +263,45 @@ def mensajes(request):
         return redirect("home")
 
     user_name = request.session.get("user", "Desconocido")
-    print("$$$$$$$$$$$",request.session["hilos_all"])
-    print("###########",request.session["hilo_actual"])
     thread_id = str(request.session["hilos_all"][request.session["hilo_actual"]]).strip()
 
     if request.method == "POST":
         texto = request.POST.get("mensaje")
         if texto:
-            # Enviar el mensaje a la API
             api_response = utils.enviar_mensaje(thread_id, user_id, texto)
-            print("MENSAJE: ",api_response)
             if api_response is None:
                 print(f"Error al enviar mensaje")
-        return redirect("mensajes")  # POST → redirect para limpiar formulario
+        return redirect("mensajes")
 
-    # GET → Obtener mensajes desde la API
+    # GET: obtener mensajes
     api_response = utils.obtener_mensajes(thread_id, limit=50)
+
     mensajes = []
     if api_response:
         for item in api_response.get("items", []):
-            item.get("created_at")
             fecha_dt = datetime.fromisoformat(item.get("created_at"))
             fecha_legible = fecha_dt.strftime("%d/%m/%Y %H:%M:%S")
+
             mensajes.append({
                 "user": item.get("user_id"),
                 "texto": item.get("content"),
-                "date":fecha_legible,
+                "date": fecha_legible,
             })
+
     mensajes.reverse()
-    # Preparar contexto para template
+
     datos = {
         "User": user_name,
         "mensajes": mensajes,
-        "current_user_id": user_id,  # Para comparar en el template
+        "current_user_id": user_id,
     }
 
-    return render(request, "mensajes.html", datos)
+    # ############### AJAX: SOLO retornar mensajes #################
+    if request.GET.get("ajax") == "1":
+        return render(request, "fragment_mensajes.html", datos)
+    # ##############################################################
 
+    return render(request, "mensajes.html", datos)
 
 def chatsbots(request):
     user_id = request.session.get("user_id")  

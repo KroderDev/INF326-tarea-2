@@ -150,14 +150,25 @@
 </div>
 
 <script>
-// Auto-scroll al final
-const box = document.getElementById("messages-box");
-if (box) box.scrollTop = box.scrollHeight;
+function cargarMensajes() {
+    fetch(window.location.pathname + "?ajax=1", { cache: "no-store" })
+    .then(resp => resp.text())
+    .then(html => {
+        const box = document.getElementById("messages-box");
+        box.innerHTML = html;
 
-// Refrescar cada 3 segundos
-setInterval(() => {
-    location.reload();
-}, 3000);
+        // Auto-scroll al final
+        box.scrollTop = box.scrollHeight;
+    })
+    .catch(err => console.error("Error al actualizar mensajes:", err));
+}
+
+// refresca cada 3 segundos SOLO la lista de mensajes
+setInterval(cargarMensajes, 3000);
+
+// scroll inicial
+const box = document.getElementById("messages-box");
+box.scrollTop = box.scrollHeight;
 </script>
 
 {% endblock %}
