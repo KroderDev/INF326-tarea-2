@@ -940,6 +940,7 @@ def obtener_archivos_por_mensajes(thread_id: str, message_ids: List[str]) -> dic
         return {"ok": False, "error": str(e)}
 
 
+
 def GetArchivos(thread_id: str, message_ids: List[str]) -> Tuple[List[Any], Any]:
     """
     Para cada message_id en message_ids (manteniendo el mismo orden) devuelve:
@@ -1004,6 +1005,62 @@ def GetArchivos(thread_id: str, message_ids: List[str]) -> Tuple[List[Any], Any]
             resultados.append(urls_por_archivo)
 
     return resultados, None
+
+def subir_archivo(message_id: str, thread_id: str, archivo, token: str | None = None, timeout: int = 30):
+    """
+    Sube un solo archivo a la API /v1/files.
+    Args:
+        message_id (str): id del mensaje (query param)
+        thread_id (str): id del hilo (query param)
+        archivo: archivo de Django (InMemoryUploadedFile o TemporaryUploadedFile)
+        api_base_url (str): ej. "https://mi-api.com"
+        token (str|None): token Bearer opcional
+        timeout (int): segundos antes de timeout
+    Returns:
+        dict: JSON de respuesta en caso de éxito, o {'error':..., 'detail':...} en fallo esperado.
+    """
+    url = URLS["archivos"].rstrip("/") + "/v1/files"
+    params = {
+        "message_id": message_id,
+        "thread_id": thread_id
+    }
+
+    # files puede ser una tupla (filename, fileobj, content_type)
+    content_type = getattr(archivo, "content_type", "application/octet-stream")
+    # requests acepta el file-like que entrega Django UploadedFile directamente
+    files = {
+        "upload": (archivo.name, archivo, content_type)
+    }
+
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    try:
+        resp = requests.post(url, params=params, files=files, headers=headers, timeout=timeout)
+    except requests.RequestException as e:
+        # Error de red / timeout
+        return {"error": "request_exception", "detail": str(e)}
+
+    # Manejo de código HTTP
+    if resp.status_code == 201:
+        try:
+            return resp.json()
+        except ValueError:
+            return {"error": "invalid_json", "detail": "La API devolvió 201 pero no JSON válido."}
+    elif resp.status_code == 422:
+        # Validación: devolver el JSON con detalle si lo tiene
+        try:
+            return {"error": "validation_error", "detail": resp.json()}
+        except ValueError:
+            return {"error": "validation_error", "detail": resp.text}
+    else:
+        # Otros errores
+        try:
+            body = resp.json()
+        except ValueError:
+            body = resp.text
+        return {"error": "http_error", "status_code": resp.status_code, "detail": body}
 
 '''
 def obtener_archivos_por_mensajes(thread_id: str, message_ids: list[str]):

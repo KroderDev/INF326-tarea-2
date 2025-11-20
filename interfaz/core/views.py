@@ -267,10 +267,32 @@ def mensajes(request):
 
     if request.method == "POST":
         texto = request.POST.get("mensaje")
+        archivos = request.FILES.getlist("archivos")
+        print("---------OBTUVE LOS ARCHIVOS, cantidad: ", len(archivos))
+        for f in archivos:
+            #print("Revisio: ",f)
+            print("-------------------Archivo:", f.name)
         if texto:
             api_response = utils.enviar_mensaje(thread_id, user_id, texto)
             if api_response is None:
                 print(f"Error al enviar mensaje")
+            else:
+                mensaje_id = api_response.get("id")
+                if len(archivos) > 0:
+                    for f in archivos:
+                        # Llama a la funcion de subida
+                        resultado = utils.subir_archivo(
+                            message_id=mensaje_id,
+                            thread_id=thread_id,
+                            archivo=f
+                        )
+                        # Manejo de la respuesta para logging / control
+                        if resultado is None:
+                            print(f"Error indeterminado subiendo {f.name}")
+                        elif resultado.get("error"):
+                            print(f"Error subiendo {f.name}: {resultado}")
+                        else:
+                            print(f"Archivo subido OK: {f.name} -> id: {resultado.get('id')}")
         return redirect("mensajes")
 
     # GET: obtener mensajes
@@ -318,13 +340,14 @@ def mensajes(request):
                             url.append(entry.get("url")["url"])
 
             mensajes.append({
+                "id":idx,
                 "user": mensajes_aux[idx]["user"],
                 "texto": mensajes_aux[idx]["texto"],
                 "date": mensajes_aux[idx]["date"],
                 "file": url,
                 "Error": flag,
             })
-            print( mensajes_aux[idx]["texto"],url)
+            #print( mensajes_aux[idx]["texto"],url)
 
 
     mensajes.reverse()

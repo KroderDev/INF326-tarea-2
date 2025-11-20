@@ -8,7 +8,7 @@
     --bg:#f5f7fb;
     --card:#fff;
     --muted:#6b7280;
-    --accent:#2563eb;
+    --accent:#2563eb; /* AZUL */
   }
 
   html, body {
@@ -28,6 +28,7 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box; /* Importante para alturas correctas */
   }
 
   h1, h3 {
@@ -40,17 +41,18 @@
     margin-bottom: 20px;
   }
 
-  /* Contenedor del chat: menos alto que toda la pantalla */
+  /* Ajuste para que ocupe el espacio restante correctamente */
   .messages-box{
     background:var(--card);
     border-radius:12px;
     padding:20px;
     box-shadow:0 4px 20px rgba(16,24,40,.08);
-    height: 60vh; /* más pequeño que antes */
+    flex: 1; /* Ocupa el espacio disponible */
     overflow-y:auto;
     display: flex;
     flex-direction: column;
     margin-bottom: 15px;
+    scroll-behavior: smooth; /* Scroll suave nativo */
   }
 
   .msg{
@@ -58,13 +60,19 @@
     display:flex;
     flex-direction:column;
     max-width:80%;
+    animation: fadeIn 0.3s ease; /* Pequeña animación al entrar */
   }
-  
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   .msg.you{
     align-self:flex-end;
     text-align:right;
   }
-  
+
   .msg.other{
     align-self:flex-start;
   }
@@ -82,6 +90,7 @@
     font-size:0.95rem;
     line-height:1.42;
     white-space:pre-wrap;
+    word-wrap: break-word;
   }
 
   .msg.you .bubble{
@@ -89,12 +98,117 @@
     color:white;
   }
 
-  .send-box{
-    display:flex;
-    gap:10px;
+  .msg.has-files{
+    max-width:95%;
   }
 
-  .send-box input{
+  .msg.has-files .bubble{
+    padding:16px 18px;
+    border-radius:16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    white-space:normal;
+  }
+
+  .attachments{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    gap:8px;
+    width:100%;
+    margin-top:6px;
+  }
+
+  .file-link{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:6px;
+    border-radius:10px;
+    text-decoration:none;
+    background:rgba(0,0,0,0.02);
+    border:1px solid rgba(0,0,0,0.04);
+    overflow:hidden;
+  }
+
+  .att-thumb{
+    width:100%;
+    max-width:200px;
+    height:auto;
+    border-radius:8px;
+    object-fit:cover;
+    display:block;
+  }
+
+  .file-name {
+      display: inline-block;
+      background: #ffffff;
+      border: 1px solid #2563eb;
+      color: #2563eb;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      word-break: break-all;
+      margin-top: 6px;
+  }
+
+  .msg .timestamp {
+      font-size: 0.7rem;
+      color: #9ca3af;
+      align-self: flex-end;
+      margin-top: 4px;
+  }
+
+  /* 🟦 BOTÓN PEQUEÑO PARA ADJUNTAR ARCHIVOS */
+  .file-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content:center;
+    align-items:center;
+    font-size: 1.3rem;
+    transition: .15s;
+    position: relative;
+  }
+
+  .file-btn:hover {
+    background:#eef2ff;
+    border-color: var(--accent);
+  }
+
+  .file-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .file-count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--accent);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 12px;
+    min-width: 18px;
+    text-align: center;
+    display: none;
+  }
+
+  .send-box{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    padding-top: 10px; /* Un poco de aire arriba del input */
+  }
+
+  .send-box input[type="text"]{
     flex:1;
     padding:14px 16px;
     font-size:1rem;
@@ -111,17 +225,12 @@
     cursor:pointer;
     font-size:1rem;
     transition:.15s;
+    height: 46px; /* Altura fija para alinear con input */
   }
 
   .send-box button:hover{
     opacity:.9;
     transform:translateY(-1px);
-  }
-  .msg .timestamp {
-      font-size: 0.7rem;
-      color: #9ca3af; /* gris claro */
-      align-self: flex-end;
-      margin-top: 4px;
   }
 </style>
 {% endblock %}
@@ -134,18 +243,26 @@
 
   <div class="messages-box" id="messages-box">
     {% for m in mensajes %}
-        <div class="msg {% if m.user == current_user_id %}you{% else %}other{% endif %}">
+        <div class="msg 
+            {% if m.user == current_user_id %}you{% else %}other{% endif %}
+            {% if m.file %}has-files{% endif %}
+        ">
             <span class="sender">{{ m.user }}</span>
-            <div class="bubble">{{ m.texto }}
-              {% if Error %}
-                  <span style="color: #f87171;">⚠️ {{ m.file }}</span>
-              {% else %}
-              {% if m.file %}
-                  {% for file in m.file %}
-                      <a href="{{ file }}" target="_blank">📎 Archivo adjunto</a><br>
-                  {% endfor %}
-              {% endif %}
-              {% endif %}
+
+            <div class="bubble">
+                {{ m.texto }}
+
+                {% if m.file %}
+                <div class="attachments">
+                    {% for file in m.file %}
+                      <a class="file-link" href="{{ file }}" target="_blank">
+                          <img src="{{ file }}" class="att-thumb"
+                             onerror="this.style.display='none'">
+                          <span class="file-name">📎</span>
+                      </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
 
             <div class="timestamp">{{ m.date }}</div>
@@ -153,33 +270,112 @@
     {% endfor %}
   </div>
 
-  <form method="POST" class="send-box">
-    {% csrf_token %}
-    <input type="text" name="mensaje" placeholder="Escribe un mensaje..." required>
-    <button type="submit">Enviar</button>
+  <form method="POST" class="send-box" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <input type="text" name="mensaje" placeholder="Escribe un mensaje..." required autocomplete="off">
+
+      <label for="file-input" class="file-btn" id="file-btn">
+          📎
+          <span class="file-count" id="file-count">0</span>
+      </label>
+
+      <input id="file-input" type="file" name="archivos" multiple style="display:none;">
+
+      <button type="submit">Enviar</button>
   </form>
 </div>
 
-<script>
-function cargarMensajes() {
-    fetch(window.location.pathname + "?ajax=1", { cache: "no-store" })
-    .then(resp => resp.text())
-    .then(html => {
-        const box = document.getElementById("messages-box");
-        box.innerHTML = html;
 
-        // Auto-scroll al final
-        box.scrollTop = box.scrollHeight;
-    })
-    .catch(err => console.error("Error al actualizar mensajes:", err));
+<script>
+// Función para hacer scroll abajo
+function scrollToBottom(smooth = true) {
+  const box = document.getElementById("messages-box");
+  if (box) {
+      box.scrollTo({
+          top: box.scrollHeight,
+          behavior: smooth ? 'smooth' : 'auto'
+      });
+  }
 }
 
-// refresca cada 3 segundos SOLO la lista de mensajes
-setInterval(cargarMensajes, 5000);
+// Al cargar la página por primera vez, vamos al fondo de golpe
+window.onload = () => scrollToBottom(false);
 
-// scroll inicial
-const box = document.getElementById("messages-box");
-box.scrollTop = box.scrollHeight;
+async function refreshMessages() {
+  try {
+    // NOTA: Si puedes configurar tu backend para que acepte un parámetro como ?ajax=1
+    // y devuelva SOLO el template_ajax, sería más eficiente.
+    // Aquí asumimos que devuelve la página completa y extraemos los mensajes.
+    const resp = await fetch(window.location.href, { cache: "no-store" });
+    
+    if (!resp.ok) return;
+
+    const html = await resp.text();
+    
+    // Parseamos el HTML recibido
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    // Obtenemos los nuevos mensajes del HTML descargado
+    // Si usas el template ajax puro, todo el 'doc.body.innerHTML' sería el contenido.
+    // Si devuelves la pagina entera, buscamos el #messages-box
+    let newContent = "";
+    const newBox = doc.getElementById("messages-box");
+    
+    if (newBox) {
+        // Si la respuesta es la página completa
+        newContent = newBox.innerHTML;
+    } else {
+        // Si la respuesta es solo el template ajax (lista de divs)
+        newContent = doc.body.innerHTML;
+    }
+
+    const currentBox = document.getElementById("messages-box");
+    
+    // Si el contenido no ha cambiado, no hacemos nada (evita parpadeos)
+    // Nota: Es una comparación básica de strings.
+    if (currentBox.innerHTML.trim() === newContent.trim()) {
+        return;
+    }
+
+    // --- LÓGICA SMART SCROLL ---
+    // Calculamos si el usuario está cerca del final (umbral de 100px)
+    const isNearBottom = currentBox.scrollHeight - currentBox.scrollTop - currentBox.clientHeight < 150;
+
+    // Actualizamos el contenido
+    currentBox.innerHTML = newContent;
+
+    // Solo bajamos si el usuario ya estaba abajo o si es la primera carga
+    if (isNearBottom) {
+        scrollToBottom();
+    }
+
+  } catch (err) {
+    console.error("Error refrescando mensajes:", err);
+  }
+}
+
+// Ejecutar cada 3 segundos (5000 a veces es mucho para chat)
+setInterval(refreshMessages, 3000);
+
+/* 🟦 ACTUALIZAR BOTÓN Y BADGE (Sin cambios) */
+const fileInput = document.getElementById("file-input");
+const fileBtn = document.getElementById("file-btn");
+const fileCount = document.getElementById("file-count");
+
+fileInput.addEventListener("change", () => {
+    const total = fileInput.files.length;
+
+    if (total > 0) {
+        fileBtn.classList.add("active");
+        fileCount.textContent = total;
+        fileCount.style.display = "inline-block";
+    } else {
+        fileBtn.classList.remove("active");
+        fileCount.style.display = "none";
+    }
+});
 </script>
 
 {% endblock %}
