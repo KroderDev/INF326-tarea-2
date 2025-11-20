@@ -136,7 +136,18 @@
     {% for m in mensajes %}
         <div class="msg {% if m.user == current_user_id %}you{% else %}other{% endif %}">
             <span class="sender">{{ m.user }}</span>
-            <div class="bubble">{{ m.texto }}</div>
+            <div class="bubble">{{ m.texto }}
+              {% if Error %}
+                  <span style="color: #f87171;">⚠️ {{ m.file }}</span>
+              {% else %}
+              {% if m.file %}
+                  {% for file in m.file %}
+                      <a href="{{ file }}" target="_blank">📎 Archivo adjunto</a><br>
+                  {% endfor %}
+              {% endif %}
+              {% endif %}
+            </div>
+
             <div class="timestamp">{{ m.date }}</div>
         </div>
     {% endfor %}
@@ -164,7 +175,7 @@ function cargarMensajes() {
 }
 
 // refresca cada 3 segundos SOLO la lista de mensajes
-setInterval(cargarMensajes, 3000);
+setInterval(cargarMensajes, 5000);
 
 // scroll inicial
 const box = document.getElementById("messages-box");

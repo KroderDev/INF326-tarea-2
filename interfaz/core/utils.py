@@ -2,6 +2,7 @@ import requests
 import json
 import os
 import uuid
+from typing import List, Tuple, Any
 NOMBRE_JSON = r"mapChatsHilos.json"
 URLS = {
     "canales": "https://channel-api.inf326.nur.dev",
@@ -11,7 +12,7 @@ URLS = {
     "busqueda": "search-service https://searchservice.inf326.nursoft.dev/",
     "usuarios": "https://users.inf326.nursoft.dev",
     
-    "archivos": "http://file-service-134-199-176-197.nip.io/docs",
+    "archivos": "http://file-service-134-199-176-197.nip.io",
     "hilos":  "https://demo.inf326.nur.dev",
 
     "wikipedia": "http://wikipedia-chatbot-134-199-176-197.nip.io",
@@ -822,8 +823,6 @@ def API_CB(tipo, texto):
     return "No entiendo la solicitud."
 
 #------------------ MENSAJES ------------------
-
-
 def formatear_uuid(uid: str) -> str:
     """
     Recibe un UID que puede ser sin guiones o ya formateado y devuelve
@@ -903,3 +902,188 @@ def obtener_mensajes(thread_id, limit=50, cursor=None):
     except json.JSONDecodeError as e:
         print(f"Error al parsear JSON: {e}")
         return {}
+
+
+#------------------ MENSAJES ------------------
+
+def obtener_archivos_por_mensajes(thread_id: str, message_ids: List[str]) -> dict:
+    """
+    Consulta la API /v1/files?thread_id=... y agrupa los archivos por message_id.
+    Devuelve:
+      {"ok": True, "files_by_message": {message_id: [file_obj, ...], ...}}
+    o
+      {"ok": False, "error": "..."}
+    NOTA: las claves en files_by_message incluyen todas las message_ids pasadas
+    (si no hay archivos para una message_id, la lista estará vacía).
+    """
+    url = URLS["archivos"].rstrip("/") + "/v1/files"
+    try:
+        resp = requests.get(url, params={"thread_id": thread_id}, timeout=10)
+        if resp.status_code != 200:
+            return {"ok": False, "error": f"Error HTTP {resp.status_code}: {resp.text}"}
+
+        data = resp.json()  # se espera una lista de objetos de archivo
+
+        # Inicializar mapa con todas las message_ids (mantener orden externo)
+        files_by_message = {mid: [] for mid in message_ids}
+        message_ids_set = set(message_ids)
+
+        # Agrupar archivos por message_id (sólo para los message_ids solicitados)
+        for f in data:
+            mid = f.get("message_id")
+            if mid in message_ids_set:
+                files_by_message.setdefault(mid, []).append(f)
+
+        return {"ok": True, "files_by_message": files_by_message}
+
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def GetArchivos(thread_id: str, message_ids: List[str]) -> Tuple[List[Any], Any]:
+    """
+    Para cada message_id en message_ids (manteniendo el mismo orden) devuelve:
+      - una lista de URLs presignadas (si hay 1+ archivos para ese message)
+      - False si NO hay archivos para ese message
+    Retorna (result_list, None) en caso OK, o (None, error_msg) en caso de error global.
+    """
+    # 1) Obtener archivos agrupados por message_id
+    resultado = obtener_archivos_por_mensajes(thread_id, message_ids)
+    if not resultado.get("ok"):
+        return None, resultado.get("error")
+
+    files_by_message = resultado["files_by_message"]
+    base = URLS["archivos"].rstrip("/")
+    presign_timeout = 10
+
+    resultados = []  # mantendrá una entrada por cada message_id en el mismo orden
+
+    for mid in message_ids:
+        archivos = files_by_message.get(mid, [])
+        if not archivos:
+            # No hay archivos para este mensaje → posicion False
+            resultados.append(False)
+            continue
+
+        # Si hay archivos, intentamos obtener presigned URLs para cada uno
+        urls_por_archivo = []
+        for archivo in archivos:
+            file_id = archivo.get("id")
+            if not file_id:
+                # objeto inválido, saltar
+                continue
+
+            try:
+                presign_endpoint = f"{base}/v1/files/{file_id}/presign-download"
+                resp = requests.post(presign_endpoint, timeout=presign_timeout)
+
+                if resp.status_code != 200:
+                    # Falló obtener presign para este archivo: guardamos un mensaje de error
+                    urls_por_archivo.append({"file_id": file_id, "error": f"HTTP {resp.status_code}: {resp.text}"})
+                    continue
+
+                # La API devuelve un string (URL). Intentamos parsearlo como JSON (puede ser un string JSON)
+                try:
+                    presigned = resp.json()
+                except ValueError:
+                    presigned = resp.text
+
+                urls_por_archivo.append({"file_id": file_id, "url": presigned})
+
+            except Exception as e:
+                urls_por_archivo.append({"file_id": file_id, "error": str(e)})
+
+        # Si no pudimos obtener ninguna URL exitosa, pero hubo intentos, devolvemos la lista (con errores)
+        # Si prefieres que en caso de que **ningún** archivo tenga URL devuelva False, podrías comprobar:
+        any_success = any(isinstance(x, dict) and x.get("url") for x in urls_por_archivo)
+        if not any_success:
+            # Ningún archivo pudo generar URL presign -> devolvemos lista con errores (útil para debugging)
+            resultados.append(urls_por_archivo if urls_por_archivo else False)
+        else:
+            # Devolver sólo los objetos con "url" y su file_id (manteniendo posible información de error en los que fallaron)
+            resultados.append(urls_por_archivo)
+
+    return resultados, None
+
+'''
+def obtener_archivos_por_mensajes(thread_id: str, message_ids: list[str]):
+    """
+    Consulta la API de archivos filtrando por thread_id y devuelve solo
+    aquellos cuyo message_id esté en message_ids.
+
+    Retorna:
+      {"ok": True, "files": [...]} en éxito
+      {"ok": False, "error": "..."} en caso de fallo
+    """
+    url = URLS["archivos"]+"/v1/files"
+    try:
+        # --- 1) Llamar a la API ---
+        resp = requests.get(url, params={"thread_id": thread_id}, timeout=10)
+
+        # Manejo de status
+        if resp.status_code != 200:
+            return {
+                "ok": False,
+                "error": f"Error HTTP {resp.status_code}: {resp.text}"
+            }
+
+        data = resp.json()  # debería ser una lista de archivos
+
+        # --- 2) Filtrar por message_id ---
+        message_ids_set = set(message_ids)  # optimiza el lookup O(1)
+
+        archivos_filtrados = [
+            f for f in data
+            if f.get("message_id") in message_ids_set
+        ]
+
+        return {
+            "ok": True,
+            "files": archivos_filtrados
+        }
+
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": str(e)
+        }
+    
+def GetArchivos(thread_id: str, message_ids: list[str]):
+    # Llamada a tu función existente
+    resultado = obtener_archivos_por_mensajes(thread_id, message_ids)
+    url = URLS["archivos"]+"/v1/files"
+    if not resultado["ok"]:
+        print("ERROR:", resultado["error"])
+        return None, resultado["error"]
+
+    archivos = resultado["files"]
+    print("Archivos encontrados:", archivos)
+
+    # Diccionario donde guardaremos file_id -> presigned_url
+    archivos_descargables = {}
+
+    # Iterar archivos y obtener el enlace de descarga
+    for archivo in archivos:
+        file_id = archivo["id"]
+
+        try:
+            # POST a la API para obtener la URL presignada
+            url_presign = f"{url}/{file_id}/presign-download"
+            resp = requests.post(url_presign)
+
+            if resp.status_code != 200:
+                print(f"Error obteniendo URL para {file_id}: {resp.text}")
+                #return None, f"Error obteniendo presign URL para {file_id}"
+                archivos_descargables[file_id] = "Error obteniendo el archivo adjunto"
+
+            presigned_url = resp.json()   # La API devuelve un string
+
+            archivos_descargables[file_id] = presigned_url
+
+        except Exception as e:
+            #return None, f"Excepción al obtener archivo {file_id}: {e}"
+            archivos_descargables[file_id] = "Error obteniendo el archivo adjunto"
+
+    # Si todo funcionó
+    return archivos_descargables, None
+'''

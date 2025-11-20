@@ -277,16 +277,55 @@ def mensajes(request):
     api_response = utils.obtener_mensajes(thread_id, limit=50)
 
     mensajes = []
+    ids = []
     if api_response:
+        mensajes_aux = []
         for item in api_response.get("items", []):
             fecha_dt = datetime.fromisoformat(item.get("created_at"))
             fecha_legible = fecha_dt.strftime("%d/%m/%Y %H:%M:%S")
 
-            mensajes.append({
+            mensajes_aux.append({
                 "user": item.get("user_id"),
                 "texto": item.get("content"),
                 "date": fecha_legible,
             })
+            ids.append(item.get("id"))
+
+        archivos, error = utils.GetArchivos(thread_id, ids)
+        #print(archivos)
+        for idx in range(len(ids)):
+            flag = False
+            # Caso error global
+            if error:
+                url = error
+                flag = True
+
+            else:
+                # Caso mensaje SIN archivos
+                if archivos[idx] is False:
+                    url = False
+
+                else:
+                    # Caso mensaje CON archivos
+                    flag = False
+                    url = []
+                    for j in range(len(archivos[idx])):
+                        entry = archivos[idx][j]  # más claro
+
+                        if "error" in entry:
+                            url.append(entry["error"])
+                        else:
+                            url.append(entry.get("url")["url"])
+
+            mensajes.append({
+                "user": mensajes_aux[idx]["user"],
+                "texto": mensajes_aux[idx]["texto"],
+                "date": mensajes_aux[idx]["date"],
+                "file": url,
+                "Error": flag,
+            })
+            print( mensajes_aux[idx]["texto"],url)
+
 
     mensajes.reverse()
 
