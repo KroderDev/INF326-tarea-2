@@ -2,7 +2,8 @@ import requests
 import json
 import os
 import uuid
-from typing import List, Tuple, Any
+from typing import Tuple, Dict, Any, Optional, List
+#from typing import List, Tuple, Any
 NOMBRE_JSON = r"mapChatsHilos.json"
 URLS = {
     "canales": "https://channel-api.inf326.nur.dev",
@@ -13,7 +14,7 @@ URLS = {
     "usuarios": "https://users.inf326.nursoft.dev",
     
     "archivos": "http://file-service-134-199-176-197.nip.io",
-    "hilos":  "https://demo.inf326.nur.dev",
+    "hilos":  "https://threads.inf326.nursoft.dev",
 
     "wikipedia": "http://wikipedia-chatbot-134-199-176-197.nip.io",
     "chatbot-programación":  "https://chatbotprogra.inf326.nursoft.dev",
@@ -647,11 +648,12 @@ def RemoveUserFromChannel(channel_id: str, user_id: str, verify: bool = True):
         return {"success": False, "error": f"Código inesperado: {r.status_code}", "details": data}
 
 #------------------ HILOS ------------------
+"""
 def GetHilos(llave):
-    """
+
     Extrae los elementos asociados a una llave (uid) de un ARCHIVO JSON
     y los devuelve como una lista de tuplas (uid, nombre).
-    """
+
     
     # --- Cargar los datos del archivo JSON ---
     try:
@@ -683,14 +685,53 @@ def GetHilos(llave):
     
     return resultados
 
+"""
+
+def GetHilosAPI(channel_id: str):
+    """
+    Llama a la API GET /channel/get_threads y retorna
+    una lista de tuplas (thread_id, title).
+    """
+    url = f"{URLS["hilos"]}/threads/channel/get_threads"
+    params = {"channel_id": channel_id}
+
+    try:
+        response = requests.get(url, params=params)
+    except requests.exceptions.RequestException as e:
+        print(f"ERROR: Falló la conexión con el servidor: {e}")
+        return []
+
+    if response.status_code != 200:
+        print(f"ERROR API {response.status_code}: {response.text}")
+        return []
+
+    try:
+        data = response.json()
+    except ValueError:
+        print("ERROR: La respuesta no es JSON válido.")
+        return []
+
+    # data debería ser una LISTA de hilos
+    # ejemplo:
+    # [
+    #   {
+    #       "thread_id": "...",
+    #       "title": "...",
+    #       "created_by": "...",
+    #       "channel_id": "..."
+    #   }
+    # ]
+    
+    resultados = [
+        (item.get("thread_id"), item.get("title"))
+        for item in data
+        if "thread_id" in item and "title" in item
+    ]
+
+    return resultados
+'''
 def ManageHilo(action, channel_id, uid=None, new_name=None):
-    """
-    Acción única para manejar hilos: create | rename | delete.
-    Retorna (True, resp_dict) o (False, {"error": ...}).
-      - create: necesita new_name -> genera uid y añade el item.
-      - rename: necesita uid y new_name -> actualiza nombre.
-      - delete: necesita uid -> elimina el item.
-    """
+
     path = NOMBRE_JSON
     p = path if path else NOMBRE_JSON
     cid = str(channel_id or "").strip()
@@ -784,6 +825,47 @@ def ManageHilo(action, channel_id, uid=None, new_name=None):
         return True, {"uid": uid, "removed": removed, "hilos": lst}
 
     return False, {"error": f"Acción desconocida: {action}"}
+'''
+def delete_thread(thread_id: str):
+    url = f"{URLS["hilos"]}/threads/threads/{thread_id}"
+    try:
+        resp = requests.delete(url, timeout=10)
+    except requests.RequestException as e:
+        return False, {"error": f"Error de red: {e}"}
+
+    if resp.status_code not in (200, 204):
+        return False, {"error": f"Status {resp.status_code}: {resp.text}"}
+
+    try:
+        data = resp.json()
+    except:
+        data = {}
+
+    return True, data
+
+def create_thread(channel_id: str, thread_name: str, user_id: str):
+    url = f"{URLS['hilos']}/threads/threads/"
+    print(url)
+    params = {
+        "channel_id": channel_id,
+        "thread_name": thread_name,
+        "user_id": user_id,
+    }
+
+    try:
+        resp = requests.post(url, params=params, timeout=10)
+    except requests.RequestException as e:
+        return False, {"error": f"Error de red: {e}"}
+
+    if resp.status_code != 200:
+        return False, {"error": f"Status {resp.status_code}: {resp.text}"}
+
+    try:
+        data = resp.json()
+    except:
+        return False, {"error": "Respuesta JSON inválida desde la API"}
+
+    return True, data
 #------------------ CHAT BOTS ------------------
 def API_CB(tipo, texto):
     #if tipo == "academico":

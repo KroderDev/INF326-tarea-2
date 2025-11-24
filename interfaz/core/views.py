@@ -182,12 +182,20 @@ def hilos(request):
     if not user_id:
         return redirect("home")  # si no hay sesión, redirige a login   
     print("///////ID:",request.session["canales_all"][request.session["chat_actual"]][0])
-    hilos = utils.GetHilos(str(request.session["canales_all"][request.session["chat_actual"]][0]).strip())
-    print("----------HILOS: ",hilos)
+    #hilos = utils.GetHilos(str(request.session["canales_all"][request.session["chat_actual"]][0]).strip())
+    hilos = utils.GetHilosAPI("692377eb9419ab02909d9071")
+
+    print("Hilos encontrados:", hilos)
     request.session["hilos_all"] = {
-        c[1]: c[0]
+        c[1]: c[0]   # title : thread_id
         for c in hilos
     }
+    print("777777777777777 HILOS: ",request.session["hilos_all"])
+    #print("----------HILOS: ",hilos)
+    #request.session["hilos_all"] = {
+        #c[1]: c[0]
+        #for c in hilos
+    #}
     print(request.session["hilos_all"])
     
     #Pedir los chats del usuario y crear los accesos a los mismos
@@ -209,6 +217,48 @@ def hilos(request):
             return redirect("mod_hilos")
         return redirect("mensajes")  
 
+def mod_hilos(request):
+    user_id = request.session.get("user_id")  
+    if not user_id:
+        return redirect("home")  # si no hay sesión, redirige a login   
+    if request.method == "GET":
+        return render(request, "mod_hilo.html",{'Hilos':request.session["hilos_all"]})
+    else:
+        
+        action = request.POST.get('action')
+        print("La accion es: ", action)
+        #print("DEBUG DELETE uid =", request.session["hilos_all"][hilo], " Accion: ",action)
+        if action == "create":
+            ok, resp = utils.create_thread(
+                channel_id=str(request.session["canales_all"][request.session["chat_actual"]][0]).strip(),
+                thread_name=request.POST.get("new_name"),
+                user_id=request.session.get("user_id")
+            )
+            if ok:
+                print("Hilo creado:", resp)
+            else:
+                print("Error creando un hilo . Error: ",resp["error"])
+                return render(request, "mod_hilo.html",{'Chats':request.session["hilos_all"], 'Err_create':resp["error"]})
+        else:
+            hilo = request.POST.get('hilo')
+            print("DEBUG DELETE uid =", request.session["hilos_all"])
+            if action == "rename":
+                flag, resp = utils.ManageHilo("rename",
+                        str(request.session["canales_all"][request.session["chat_actual"]][0]).strip(),
+                        uid=request.session["hilos_all"][hilo],
+                        new_name=request.POST.get("new_name"))
+                if not flag: return render(request, "mod_hilo.html",{'Hilos':request.session["hilos_all"], 'Err_mod':resp["error"]})
+            elif action == "delete":
+                ok, resp = utils.delete_thread(request.session["hilos_all"][hilo])
+                if ok:
+                    print("Hilo eliminado:", resp)
+                else:
+                    print("Error:", resp["error"])
+                    return render(request, "mod_hilo.html",{'Hilos':request.session["hilos_all"], 'Err_del':resp["error"]})
+            else:
+                return redirect("mod_chat")
+        return redirect("main")  
+'''
 def mod_hilos(request):
     user_id = request.session.get("user_id")  
     if not user_id:
@@ -239,7 +289,7 @@ def mod_hilos(request):
             else:
                 return redirect("mod_chat")
         return redirect("main")  
-
+'''
 
 """
 def mensajes(request):
