@@ -697,6 +697,7 @@ def GetHilosAPI(channel_id: str):
 
     try:
         response = requests.get(url, params=params)
+        print("DATAAAAAAAA: ", response.text)
     except requests.exceptions.RequestException as e:
         print(f"ERROR: Falló la conexión con el servidor: {e}")
         return []
@@ -707,6 +708,7 @@ def GetHilosAPI(channel_id: str):
 
     try:
         data = response.json()
+        print("DATAAAAAAAA: ",data)
     except ValueError:
         print("ERROR: La respuesta no es JSON válido.")
         return []
@@ -721,14 +723,56 @@ def GetHilosAPI(channel_id: str):
     #       "channel_id": "..."
     #   }
     # ]
+    '''
     
+    '''
     resultados = [
         (item.get("thread_id"), item.get("title"))
         for item in data
         if "thread_id" in item and "title" in item
     ]
-
+    print("RESULTADOS: ", resultados)
     return resultados
+
+def get_channel_threads(channel_id: str):
+    """
+    Obtiene todos los hilos asociados a un canal específico mediante GET.
+    """
+    # Construcción de la URL según la documentación: /channel/get_threads
+    url = f"{URLS['hilos']}/threads/channel/get_threads"
+    
+    # Los parámetros Query (?channel_id=...) se pasan en el diccionario 'params'
+    params = {
+        "channel_id": channel_id
+    }
+
+    headers = {
+        "accept": "application/json"
+    }
+
+    # Print para depuración (opcional)
+    print(f"GET Request a: {url} con params: {params}")
+
+    try:
+        # Usamos requests.get para una petición GET
+        resp = requests.get(url, params=params, headers=headers, timeout=10)
+        
+    except requests.RequestException as e:
+        return False, {"error": f"Error de red: {e}"}
+
+    # Validación del código de estado
+    if resp.status_code != 200:
+        # Si es 422, es un error de validación (ej. channel_id formato incorrecto)
+        return False, {"error": f"Status {resp.status_code}: {resp.text}"}
+
+    try:
+        data = resp.json()
+    except ValueError:
+        return False, {"error": "Respuesta JSON inválida desde la API"}
+    print("NUEVA DATAA: ",data)
+    # Retorna True y la lista de hilos
+    return True, data
+
 def ManageHilo(action, channel_id, uid=None, new_name=None):
 
     path = NOMBRE_JSON
@@ -852,10 +896,14 @@ def create_thread(channel_id: str, thread_name: str, user_id: str):
     }
 
     try:
-        resp = requests.post(url, params=params, timeout=10)
+        resp = requests.post(url, params=params, timeout=10, allow_redirects=False)
     except requests.RequestException as e:
         return False, {"error": f"Error de red: {e}"}
-
+    print("REQUEST URL:", resp.request.url)            # URL final enviada (con query)
+    print("REQUEST METHOD:", resp.request.method)
+    print("STATUS:", resp.status_code)
+    print("HEADERS (respuesta):", resp.headers)
+    print("LOCATION header:", resp.headers.get("Location"))
     if resp.status_code != 200:
         return False, {"error": f"Status {resp.status_code}: {resp.text}"}
 
@@ -904,11 +952,8 @@ def API_CB(tipo, texto):
     return "No entiendo la solicitud."
 
 #------------------ MENSAJES ------------------
+"""
 def formatear_uuid(uid: str) -> str | None:
-    """
-    Recibe un UID que puede ser sin guiones o ya formateado y devuelve
-    un UUID estándar con guiones. Si el UID no es válido, devuelve None.
-    """
     # Limpiamos espacios
     uid = uid.strip()
     
@@ -928,18 +973,29 @@ def formatear_uuid(uid: str) -> str | None:
         return str(uuid.UUID(uid_sin_guiones))
     except ValueError:
         return None
+"""
+def formatear_uuid(uuid_str):
+    # Si ya tiene guiones, retornar igual
+    if "-" in uuid_str:
+        return uuid_str
 
+    # Si tiene 24 caracteres (Mongo ObjectId) → imposible convertir a UUID real
+    # pero algunos servicios esperan que lo conviertas a UUID v5
+    if len(uuid_str) == 24:
+        # UUID determinístico usando lo recibido
+        import uuid
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, uuid_str))
+
+    return uuid_str
+
+"""
+
+"""
 def enviar_mensaje(thread_id: str, user_id: str, contenido: str) -> dict | None:
-    """
-    Envía un mensaje de tipo texto a un hilo específico.
-    
-    :param thread_id: UUID del hilo
-    :param user_id: UUID del usuario
-    :param contenido: Texto del mensaje
-    :return: Diccionario con la respuesta JSON si fue exitosa, o None si falló
-    """
     tid = formatear_uuid(thread_id)
+    #tid = thread_id
     uid = formatear_uuid(user_id)
+    #uid=user_id
     if tid is None or uid is None:
         print("IDs de hilo/usuario no validos, no se envia el mensaje.")
         return None
@@ -966,8 +1022,10 @@ def enviar_mensaje(thread_id: str, user_id: str, contenido: str) -> dict | None:
         print("Error al enviar mensaje:", e)
         return None
 
+"""
 def obtener_mensajes(thread_id, limit=50, cursor=None):
-    tid = formatear_uuid(thread_id)
+    #tid = formatear_uuid(thread_id)
+    tid =thread_id
     if tid is None:
         print("Thread ID invalido, no se pueden obtener mensajes.")
         return {}
@@ -989,6 +1047,22 @@ def obtener_mensajes(thread_id, limit=50, cursor=None):
         return {}
     except json.JSONDecodeError as e:
         print(f"Error al parsear JSON: {e}")
+        return {}
+"""
+def obtener_mensajes(thread_id, limit=50, cursor=None):
+    tid = formatear_uuid(thread_id)
+
+    url = f"{URLS['mensajes']}/threads/{tid}/messages"
+    params = {"limit": limit}
+    if cursor:
+        params["cursor"] = cursor
+
+    try:
+        r = requests.get(url, params=params, headers={"accept": "application/json"}, timeout=5)
+        r.raise_for_status()
+        return r.json()
+    except Exception as e:
+        print(f"Error al obtener mensajes: {e}")
         return {}
 
 def obtener_archivos_por_mensajes(thread_id: str, message_ids: List[str]) -> dict:

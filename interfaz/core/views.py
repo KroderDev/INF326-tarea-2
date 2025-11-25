@@ -183,7 +183,7 @@ def hilos(request):
         return redirect("home")  # si no hay sesión, redirige a login   
     print("///////ID:",request.session["canales_all"][request.session["chat_actual"]][0])
     #hilos = utils.GetHilos(str(request.session["canales_all"][request.session["chat_actual"]][0]).strip())
-    hilos = utils.GetHilosAPI("692377eb9419ab02909d9071")
+    hilos = utils.GetHilosAPI(str(request.session["canales_all"][request.session["chat_actual"]][0]).strip())
 
     print("Hilos encontrados:", hilos)
     request.session["hilos_all"] = {
