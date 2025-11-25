@@ -104,6 +104,23 @@ services:
           - edge
           - moderation
 
+  - name: file-service
+    host: file-service-api.file-service.svc.cluster.local
+    port: 80
+    protocol: http
+    routes:
+      - name: files-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /files
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - files
+
   - name: search-service
     host: search-service.default.svc.cluster.local
     port: 8000
@@ -138,24 +155,41 @@ services:
           - edge
           - chatbot
 
-  - name: chatbot-programming-service
-    host: chatbot-programming-service.default.svc.cluster.local
-    port: 80
+  - name: chatbot-utilidad-service
+    host: chatbot-svc-api-gateway.default.svc.cluster.local
+    port: 3000
     protocol: http
     routes:
-      - name: chatbot-programming-api
+      - name: chatbot-utilidad-api
         hosts:
           - api.grupo04.inf326.cl
           - api-utfsm.kroder.dev
         paths:
-          - /chatbot-programming
+          - /chatbot-utilidad
         strip_path: true
         path_handling: v0
         tags:
           - edge
           - chatbot
 
-  - name: wikipedia-chatbot-service
+  - name: chatbot-calculo-service
+    host: api-gateway-service.calculadora.svc.cluster.local
+    port: 5000
+    protocol: http
+    routes:
+      - name: chatbot-calculo-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /chatbot-calculo
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - chatbot
+
+  - name: chatbot-wikipedia-service
     host: wikipedia-chatbot-service.default.svc.cluster.local
     port: 9001
     protocol: http
@@ -166,6 +200,23 @@ services:
           - api-utfsm.kroder.dev
         paths:
           - /chatbot-wikipedia
+        strip_path: true
+        path_handling: v0
+        tags:
+          - edge
+          - chatbot
+
+  - name: chatbot-programming-service
+    host: chatbot-programming-service-svc.default.svc.cluster.local
+    port: 8001
+    protocol: http
+    routes:
+      - name: chatbot-programming-api
+        hosts:
+          - api.grupo04.inf326.cl
+          - api-utfsm.kroder.dev
+        paths:
+          - /chatbot-programming
         strip_path: true
         path_handling: v0
         tags:
