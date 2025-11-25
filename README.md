@@ -87,6 +87,12 @@ flowchart LR
 
 - Video demostrativo:
  
+ [Video demostrativo](https://github.com/user-attachments/assets/613c4b59-204e-4ebc-b017-0d124e16da58)
+
+
+
+
+
 ## Tools
 - [`tools/`](tools/) tiene scripts de benchmarking, ver [`tools/README.md`](tools/README.md).
 
