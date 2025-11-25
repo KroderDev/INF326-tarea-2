@@ -4,10 +4,16 @@
 {% block body_class %}bg-hero{% endblock %}
 
 {% block content %}
-<section class="section stack">
-  <div>
-    <p class="subtitle">Asistentes</p>
-    <h1 class="headline">ChatBOTS</h1>
+<section class="section stack-lg">
+  <div class="card stack">
+    <div class="header-row">
+      <div>
+        <p class="subtitle">Asistentes inteligentes</p>
+        <h1 class="headline" style="margin-top:4px;">ChatBOTS</h1>
+      </div>
+      <span class="text-muted">{{ chatsbots|length }} disponibles</span>
+    </div>
+    <p class="text-muted" style="margin:0;">Elige el asistente adecuado y solicita su apoyo!</p>
   </div>
 
   <div class="card-grid">
@@ -15,6 +21,7 @@
       <div class="tile">
         <div>
           <h3 class="tile__title">{{ nombre }}</h3>
+          <p class="tile__desc">Chat especializado en {{ nombre|lower }}.</p>
         </div>
         <div class="tile__actions">
           <form method="POST">

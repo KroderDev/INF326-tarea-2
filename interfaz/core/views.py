@@ -95,48 +95,62 @@ def main(request):
     if not user_id:
         return redirect("home")  # si no hay sesión, redirige a login    
     if request.method == "GET":
-        chats = utils.GetChats(user_id)
-        chatsMIOS = utils.GetChatsMiosFiltrados(user_id)           
-        print("entreeeeeeeeeee")
-        if chats["success"] and chats["success"]:
-            canales_dict = {
-                c["name"]: [c["id"], c["user_count"], c["channel_type"]]
-                for c in chats["channels"]
-            }
+        # AJAX: devolver data para llenar la UI sin bloquear
+        if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("ajax") == "1":
+            try:
+                chats = utils.GetChats(user_id)
+                chatsMIOS = utils.GetChatsMiosFiltrados(user_id)
+            except Exception as e:
+                return JsonResponse({"success": False, "error": f"Excepcion obteniendo canales: {e}"}, status=500)
 
-            # Diccionario de canales que YO manejo
-            canales_dictMIOS = {
-                c["name"]: [c["id"], c["user_count"], c["channel_type"]]
-                for c in chatsMIOS["channels"]
-            }
+            if chats.get("success") and chatsMIOS.get("success"):
+                try:
+                    canales_dict = {
+                        c["name"]: [c["id"], c["user_count"], c["channel_type"]]
+                        for c in chats.get("channels", [])
+                    }
+                    canales_dictMIOS = {
+                        c["name"]: [c["id"], c["user_count"], c["channel_type"]]
+                        for c in chatsMIOS.get("channels", [])
+                    }
+                    canales_no_mios = {
+                        name: data
+                        for name, data in canales_dict.items()
+                        if name not in canales_dictMIOS
+                    }
+                except Exception as e:
+                    return JsonResponse({"success": False, "error": f"Error procesando canales: {e}"}, status=500)
 
-            # Obtener solo los NO míos
-            canales_no_mios = {
-                name: data
-                for name, data in canales_dict.items()
-                if name not in canales_dictMIOS
-            }
-            request.session["canales_all"] = canales_dict
-            request.session["canales_mios"] = canales_dictMIOS
-            print(request.session["canales_mios"])
-            datos = {
-                "User": request.session.get("user"),
-                "UserId": request.session.get("user_id"),
-                "Chats": list(canales_no_mios.keys()),
-                "Mios": list(canales_dictMIOS.keys()),
-            }
+                request.session["canales_all"] = canales_dict
+                request.session["canales_mios"] = canales_dictMIOS
 
-            return render(request, "main.html", datos)
+                total_online = None
+                online_data = utils.obtener_total_online()
+                if online_data.get("success"):
+                    total_online = online_data.get("total")
 
-        else:
-            # Mostrar error y pasar chats vacío
-            print("Error:", chats["error"], chats.get("details"))
-            return render(request, "main.html", {
-                "User": request.session.get("user"),
-                "UserId": request.session.get("user_id"),
-                "Chats": [],
-                "err": chats["error"]
-            })
+                return JsonResponse({
+                    "success": True,
+                    "chats": list(canales_no_mios.keys()),
+                    "mios": list(canales_dictMIOS.keys()),
+                    "online": total_online,
+                })
+            else:
+                return JsonResponse({
+                    "success": True,
+                    "chats": [],
+                    "mios": [],
+                    "online": None,
+                    "error": chats.get("error", "No se pudieron obtener canales")
+                })
+
+        # Render inicial liviano
+        return render(request, "main.html", {
+            "User": request.session.get("user"),
+            "UserId": request.session.get("user_id"),
+            "Chats": [],
+            "Mios": [],
+        })
 
     else:
         # POST: redirigir a hilos
@@ -182,37 +196,41 @@ def hilos(request):
     user_id = request.session.get("user_id")  
     if not user_id:
         return redirect("home")  # si no hay sesión, redirige a login   
-    print("///////ID:",request.session["canales_all"][request.session["chat_actual"]][0])
     #hilos = utils.GetHilos(str(request.session["canales_all"][request.session["chat_actual"]][0]).strip())
-    hilos = utils.GetHilosAPI("692377eb9419ab02909d9071")
+    hilos = utils.GetHilosAPI(str(request.session["canales_all"][request.session["chat_actual"]][0]).strip())
 
-    print("Hilos encontrados:", hilos)
     request.session["hilos_all"] = {
         c[1]: c[0]   # title : thread_id
         for c in hilos
     }
-    print("777777777777777 HILOS: ",request.session["hilos_all"])
-    #print("----------HILOS: ",hilos)
-    #request.session["hilos_all"] = {
-        #c[1]: c[0]
-        #for c in hilos
-    #}
-    print(request.session["hilos_all"])
     
-    #Pedir los chats del usuario y crear los accesos a los mismos
-    print("Voy a pasar al chat: ", request.session["chat_actual"])
-    print("CNAAAAAAL:",request.session["chat_actual"])
     flag = False
     if request.session["chat_actual"] in list(request.session["canales_mios"].keys()):
         flag = True
 
-    print("CANALES MIOS:",request.session["canales_mios"])
     datos = {"User":request.session["user"], "Chat":request.session["chat_actual"],"Hilos":request.session["hilos_all"],"Mio":flag}
     if request.method == "GET":
-        print("Usuario ", request.session["user"])
-        
         return render(request, "hilos.html",datos) 
     else:
+        action = request.POST.get("action")
+        if action in ("add_user","remove_user"):
+            target = request.POST.get("user_id")
+            if not target:
+                datos["Err_part"] = "Debes indicar el ID de usuario."
+                return render(request, "hilos.html", datos)
+            channel_id = request.session["canales_all"][request.session["chat_actual"]][0]
+            if action == "add_user":
+                resp = utils.AddUserToChannel(channel_id, target)
+                if not resp.get("success"):
+                    datos["Err_part"] = resp.get("error", "No se pudo agregar el usuario.")
+                    return render(request, "hilos.html", datos)
+            else:
+                resp = utils.RemoveUserFromChannel(channel_id, target)
+                if not resp.get("success"):
+                    datos["Err_part"] = resp.get("error", "No se pudo remover el usuario.")
+                    return render(request, "hilos.html", datos)
+            return redirect("hilos")
+
         request.session["hilo_actual"] = request.POST.get('hilo')
         if request.POST.get('new_thread') == "1":
             return redirect("mod_hilos")
@@ -445,11 +463,12 @@ def chatbot_view(request, tipo):
     if not user_id:
         return redirect("home")  # si no hay sesión, redirige a login   
     historial = request.session.get(f"chat_{tipo}", [])
+    user_name = request.session.get("user", "Tú")
 
     if request.method == "POST":
         user_msg = request.POST.get("mensaje")
         if user_msg:
-            historial.append({"sender": "user", "text": user_msg})
+            historial.append({"sender": user_name, "text": user_msg})
 
             respuesta = utils.API_CB(tipo, user_msg)
             historial.append({"sender": "bot", "text": respuesta})
@@ -461,6 +480,7 @@ def chatbot_view(request, tipo):
 
     return render(request, "chat_template.html", {
         "tipo": tipo.capitalize(),
-        "historial": historial
+        "historial": historial,
+        "username": user_name,
     })
 

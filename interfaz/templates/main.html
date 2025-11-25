@@ -4,49 +4,136 @@
 {% block body_class %}bg-hero{% endblock %}
 
 {% block content %}
-<section class="section stack">
-  <div class="header-row">
-    <div>
-      <p class="subtitle">Bienvenido, {{ User }}</p>
-      <h1 class="headline">Chats</h1>
+<section class="section stack-lg">
+  <div class="card stack">
+    <div class="header-row">
+      <div>
+        <p class="subtitle">Bienvenido, {{ User }}</p>
+        <h1 class="headline" style="margin-top:4px;">Panel de chats</h1>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="new_chat" value="1">
+        <button class="btn btn-primary btn-small">Crear / Explorar</button>
+      </form>
     </div>
-    <form method="POST">
-      {% csrf_token %}
-      <input type="hidden" name="new_chat" value="1">
-      <button class="btn btn-accent btn-small">Crear / Explorar</button>
-    </form>
+    <p class="text-muted" style="margin:0;">Gestiona tus canales y accede rápidamente a las conversaciones activas.</p>
   </div>
 
-  <div class="card card--list stack">
-    <h2 class="section-title">Canales de los que soy parte</h2>
-    <div class="stack">
-      {% for chat in Chats %}
-        <form method="POST">
-          {% csrf_token %}
-          <input type="hidden" name="chat" value="{{ chat }}">
-          <input type="hidden" name="new_chat" value="0">
-          <button type="submit" class="list-btn">{{ chat }}</button>
-        </form>
-      {% empty %}
-        <p class="empty">No hay chats disponibles.</p>
-      {% endfor %}
+  <div class="list-grid">
+    <div class="card card--list stack">
+      <div class="header-row">
+        <h2 class="section-title">Canales disponibles</h2>
+        <span class="text-muted" id="count-chats">Cargando...</span>
+      </div>
+      <div class="stack" data-chats-container>
+        <p class="text-muted">Cargando canales...</p>
+      </div>
     </div>
-  </div>
 
-  <div class="card card--list stack">
-    <h2 class="section-title">Mis canales</h2>
-    <div class="stack">
-      {% for chat in Mios %}
-        <form method="POST">
-          {% csrf_token %}
-          <input type="hidden" name="chat" value="{{ chat }}">
-          <input type="hidden" name="new_chat" value="0">
-          <button type="submit" class="list-btn">{{ chat }}</button>
-        </form>
-      {% empty %}
-        <p class="empty">No hay chats disponibles.</p>
-      {% endfor %}
+    <div class="card card--list stack">
+      <div class="header-row">
+        <h2 class="section-title">Mis canales</h2>
+        <span class="text-muted" id="count-mios">Cargando...</span>
+      </div>
+      <div class="stack" data-mios-container>
+        <p class="text-muted">Cargando canales...</p>
+      </div>
     </div>
   </div>
 </section>
+
+<div class="floating-online" id="online-pill">
+  <span class="floating-dot"></span>
+  <span id="online-text">Actualizando usuarios en línea...</span>
+</div>
+
+<script>
+  const chatsContainer = document.querySelector('[data-chats-container]');
+  const miosContainer = document.querySelector('[data-mios-container]');
+  const countChats = document.getElementById('count-chats');
+  const countMios = document.getElementById('count-mios');
+  const onlineText = document.getElementById('online-text');
+  const onlinePill = document.getElementById('online-pill');
+  const loader = document.querySelector('.page-loader');
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+  const csrfToken = getCookie('csrftoken');
+
+  function renderList(container, items, isMine=false) {
+    container.innerHTML = '';
+    if (!items || items.length === 0) {
+      container.innerHTML = '<p class="empty">No hay chats disponibles.</p>';
+      return;
+    }
+    items.forEach(chat => {
+      const form = document.createElement('form');
+      form.method = 'POST';
+
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = csrfToken || '';
+      form.appendChild(csrfInput);
+
+      const chatInput = document.createElement('input');
+      chatInput.type = 'hidden';
+      chatInput.name = 'chat';
+      chatInput.value = chat;
+      form.appendChild(chatInput);
+
+      const flagInput = document.createElement('input');
+      flagInput.type = 'hidden';
+      flagInput.name = 'new_chat';
+      flagInput.value = '0';
+      form.appendChild(flagInput);
+
+      const btn = document.createElement('button');
+      btn.type = 'submit';
+      btn.className = 'list-btn';
+      btn.textContent = chat;
+
+      form.appendChild(btn);
+      container.appendChild(form);
+    });
+  }
+
+  async function loadData() {
+    loader?.classList.add('is-on');
+    try {
+      const resp = await fetch(`${window.location.pathname}?ajax=1`, {
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+      });
+      if (!resp.ok) throw new Error('Error cargando datos');
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.error || 'Error obteniendo datos');
+
+      renderList(chatsContainer, data.chats || []);
+      renderList(miosContainer, data.mios || []);
+      countChats.textContent = `${(data.chats || []).length} canales`;
+      countMios.textContent = `${(data.mios || []).length} administrados`;
+
+      if (data.online !== null && data.online !== undefined) {
+        onlineText.textContent = `${data.online} usuarios en línea`;
+      } else {
+        onlineText.textContent = 'Usuarios en línea no disponibles';
+      }
+      onlinePill.classList.add('is-visible');
+    } catch (e) {
+      chatsContainer.innerHTML = '<p class="error">No se pudieron cargar los canales.</p>';
+      miosContainer.innerHTML = '<p class="error">No se pudieron cargar los canales.</p>';
+      countChats.textContent = 'Error';
+      countMios.textContent = 'Error';
+      onlineText.textContent = 'Usuarios en línea no disponibles';
+    } finally {
+      loader?.classList.remove('is-on');
+    }
+  }
+
+  loadData();
+</script>
 {% endblock %}

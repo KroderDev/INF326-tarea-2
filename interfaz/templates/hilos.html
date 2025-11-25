@@ -11,11 +11,14 @@
       <h1 class="headline">Hilos</h1>
     </div>
     {% if Mio %}
-    <form method="POST">
-      {% csrf_token %}
-      <input type="hidden" name="new_thread" value="1">
-      <button class="btn btn-accent btn-small">Nuevo hilo</button>
-    </form>
+    <div class="header-row" style="gap:8px; flex-wrap: wrap;">
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="new_thread" value="1">
+        <button class="btn btn-accent btn-small">Nuevo hilo</button>
+      </form>
+      <button type="button" class="btn btn-primary btn-small" data-open-modal="participants">Participantes</button>
+    </div>
     {% endif %}
   </div>
 
@@ -33,4 +36,38 @@
     </div>
   </div>
 </section>
+
+{% if Mio %}
+<div class="modal-overlay" data-modal="participants">
+  <div class="modal">
+    <div class="modal__header">
+      <h3 class="section-title" style="margin:0;">Participantes del canal</h3>
+      <button type="button" class="btn btn-ghost btn-small" data-close-modal="participants">Cerrar</button>
+    </div>
+    {% if Err_part %}<p class="error">{{ Err_part }}</p>{% endif %}
+    <p class="text-muted">Actualmente la API no entrega listado de participantes, solo se admite agregar o eliminar por ID.</p>
+    <form method="POST" class="stack">
+      {% csrf_token %}
+      <div class="field">
+        <label for="user_id">ID de usuario</label>
+        <input id="user_id" type="text" name="user_id" placeholder="uuid del usuario" required>
+      </div>
+      <div class="header-row">
+        <button type="submit" name="action" value="add_user" class="btn btn-primary btn-small">Agregar</button>
+        <button type="submit" name="action" value="remove_user" class="btn btn-danger btn-small">Eliminar</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+  const openBtn = document.querySelector('[data-open-modal="participants"]');
+  const overlay = document.querySelector('[data-modal="participants"]');
+  const closeBtn = document.querySelector('[data-close-modal="participants"]');
+  openBtn?.addEventListener('click', () => overlay?.classList.add('is-open'));
+  closeBtn?.addEventListener('click', () => overlay?.classList.remove('is-open'));
+  overlay?.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('is-open');
+  });
+</script>
+{% endif %}
 {% endblock %}
