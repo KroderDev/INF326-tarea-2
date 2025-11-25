@@ -1,43 +1,38 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: grupo04-kong
-  labels:
-    app.kubernetes.io/name: grupo04-kong
-    app.kubernetes.io/part-of: grupo04
+  name: interfaz
   annotations:
-    argocd.argoproj.io/sync-wave: "7"
+    argocd.argoproj.io/sync-wave: "8"
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "12m"
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - api-grupo04.inf326.nursoft.dev
-      secretName: api-grupo04-inf326-nursoft-dev-tls
+        - app.inf326.nursoft.dev
+      secretName: app-inf326-nursoft-dev-tls
     - hosts:
-        - api-utfsm.kroder.dev
-      secretName: api-utfsm-kroder-dev-tls
+        - app.kroder.dev
+      secretName: app-kroder-dev-tls
   rules:
-    - host: api-grupo04.inf326.nursoft.dev
+    - host: app.inf326.nursoft.dev
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: grupo04-kong-proxy
+                name: interfaz
                 port:
                   number: 80
-    - host: api-utfsm.kroder.dev
+    - host: app.kroder.dev
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: grupo04-kong-proxy
+                name: interfaz
                 port:
                   number: 80

@@ -3,8 +3,8 @@
 El borde del sistema se resuelve con Kong en modo estatico (DB-less). Toda la configuracion vive en `deployment/api-gateway/kong.yml` y se aplica via `kubectl/argocd` usando el `kustomization` del mismo directorio.
 
 Dominios publicos del gateway (aislados para group-04):
-- https://api-group04.kroder.dev
-- https://api-group04.inf326.nursoft.dev
+- https://api-utfsm.kroder.dev
+- https://api-grupo04.inf326.nursoft.dev
 
 Todas las llamadas externas deben salir por estos hostnames; la interfaz ya apunta al gateway en vez de usar URLs directas de cada microservicio.
 
