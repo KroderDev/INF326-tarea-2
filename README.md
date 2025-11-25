@@ -68,8 +68,25 @@ flowchart LR
 - Los manifiestos listos para `kubectl` o Argo CD estan en [`deployment/api-gateway/`](deployment/api-gateway/).
 
 ## Interfaz
-- Work in Progress.
+- Se desarrollo con el framework django, el cual permitio desarrollo de back simple, para manejar generar las llamadas y filtrar algunos datos. Debido al uso de este framework, mencionar que se puede ejecutar localmente de la forma:
 
+       python manage.py runserver
+
+
+
+- Las credenciales empleadas para el testing:
+
+  
+       Usuario1: felipe.durana
+
+       Clave1: Colocolo91
+
+       Usuario2: felipe.duran
+
+       Clave2: Colocolo
+
+- Video demostrativo:
+ 
 ## Tools
 - [`tools/`](tools/) tiene scripts de benchmarking, ver [`tools/README.md`](tools/README.md).
 
