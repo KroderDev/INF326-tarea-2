@@ -1,175 +1,62 @@
 {% extends "base.html" %}
 
-{% block title %}Chats{% endblock %}
-
-{% block styles %}
-<style>
-  :root {
-    --bg:#f5f7fb;
-    --card:#fff;
-    --muted:#6b7280;
-    --accent:#2563eb;
-    --danger:#dc2626;
-  }
-
-  body {
-    font-family:Inter,system-ui,Arial,sans-serif;
-    background:var(--bg);
-    margin:0;
-  }
-
-  .chat-container{
-    max-width:560px;
-    margin:40px auto;
-    padding:0 20px;
-  }
-
-  /* --- TARJETA --- */
-  .chat-card {
-    background:var(--card);
-    border-radius:12px;
-    padding:20px;
-    margin-bottom:20px;
-    box-shadow:0 4px 20px rgba(16,24,40,.08);
-  }
-
-  .chat-header {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:12px;
-  }
-
-  .chat-name {
-    font-size:1.2rem;
-    font-weight:600;
-  }
-
-  .delete-btn {
-    background:var(--danger);
-    color:white;
-    border:none;
-    padding:8px 14px;
-    border-radius:8px;
-    cursor:pointer;
-    font-size:0.9rem;
-    transition:0.15s;
-  }
-
-  .delete-btn:hover {
-    background:#b91c1c;
-  }
-
-  /* Formulario de renombrar */
-
-  .error{
-    background:#fff1f0;color:#991b1b;border:1px solid #fecaca;
-    padding:10px;border-radius:8px;margin-bottom:12px
-  }
-
-.rename-form {
-  display:flex;
-  flex-direction:column;     /* <-- Botón debajo */
-  gap:10px;
-  margin-top:10px;
-}
-
-.rename-form input {
-  width:50%;                 /* <-- Más pequeño */
-  border:1px solid #ddd;
-  border-radius:8px;
-  padding:6px 10px;
-  font-size:0.95rem;
-}
-
-.rename-submit {
-  background:var(--accent);
-  color:white;
-  border:none;
-  padding:8px 14px;
-  border-radius:8px;
-  cursor:pointer;
-  width:30%;                 /* <-- Botón más pequeño y centrado */
-  font-size:0.9rem;
-  align-self:flex-start;     /* <-- Alineado a la izquierda */
-}
-
-.rename-submit:hover {
-  background:#1e4fc9;
-}
-
-.channel-type-select {
-  width:50%;
-  border:1px solid #ddd;
-  border-radius:8px;
-  padding:6px 10px;
-  font-size:0.95rem;
-  background:white;
-}
-</style>
-{% endblock %}
+{% block title %}Gestionar hilos{% endblock %}
+{% block body_class %}bg-hero{% endblock %}
 
 {% block content %}
+<section class="section stack-lg">
+  <div class="card">
+    <h2 class="section-title">Crear hilo</h2>
+    {% if Err_create %}
+      <p class="error">Error creando el hilo. {{ Err_del }}</p>
+    {% endif %}
+    <form method="POST" class="stack">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create">
 
-<div class="chat-container">
-  <h2>💡Crea tu hilo</h2>
-  {% if Err_create %}
-    <p class="error">Error creando el hilo. {{ Err_del }}</p>
-  {% endif %}
-  <div class="chat-card">
+      <div class="field">
+        <label for="new_name">Nombre</label>
+        <input id="new_name" type="text" name="new_name" placeholder="Nombre" required>
+      </div>
 
-    <form method="POST" class="rename-form">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="create">
-
-    <input type="text" name="new_name" placeholder="Nombre" required>
-
-    <button class="rename-submit" type="submit">Guardar</button>
-    </form>
-  </div>
-</div>
-
-<div class="chat-container">
-  <h2>🛠️Mis canales</h2>
-  {% if Err_mod %}
-    <p class="error">Error modificando el canal. {{ Err_mod }}</p>
-  {% endif %}
-  {% if Err_del %}
-    <p class="error">Error eliminando el canal. {{ Err_del }}</p>
-  {% endif %}
-  {% for hilo in Hilos %}
-  
-  <div class="chat-card">
-
-    <!-- ENCABEZADO: Nombre + Botón eliminar -->
-    <div class="chat-header">
-      <span class="chat-name">{{ hilo }}</span>
-
-      <form method="POST" style="display:inline;">
-        {% csrf_token %}
-        <input type="hidden" name="hilo" value="{{ hilo }}">
-        <input type="hidden" name="action" value="delete">
-        <button class="delete-btn" type="submit">Eliminar</button>
-      </form>
-    </div>
-
-    <!-- FORM DE RENOMBRAR -->
-    <form method="POST" class="rename-form">
-    {% csrf_token %}
-    <input type="hidden" name="hilo" value="{{ hilo }}">
-    <input type="hidden" name="action" value="rename">
-
-    <input type="text" name="new_name" placeholder="Nuevo nombre..." required>
-
-    <!-- Botón Guardar -->
-    <button class="rename-submit" type="submit">Cambiar</button>
+      <button class="btn btn-primary">Guardar</button>
     </form>
   </div>
 
-  {% empty %}
-    <p style="color:var(--muted);text-align:center;">No hay hilos disponibles.</p>
-  {% endfor %}
+  <div class="card stack">
+    <h2 class="section-title">Mis hilos</h2>
+    {% if Err_mod %}<p class="error">Error modificando el hilo. {{ Err_mod }}</p>{% endif %}
+    {% if Err_del %}<p class="error">Error eliminando el hilo. {{ Err_del }}</p>{% endif %}
 
-</div>
+    {% for hilo in Hilos %}
+      <div class="card card--list stack">
+        <div class="header-row">
+          <span class="section-title">{{ hilo }}</span>
+          <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="hilo" value="{{ hilo }}">
+            <input type="hidden" name="action" value="delete">
+            <button class="btn btn-danger btn-small" type="submit">Eliminar</button>
+          </form>
+        </div>
 
+        <form method="POST" class="stack">
+          {% csrf_token %}
+          <input type="hidden" name="hilo" value="{{ hilo }}">
+          <input type="hidden" name="action" value="rename">
+
+          <div class="field">
+            <label>Nuevo nombre</label>
+            <input type="text" name="new_name" placeholder="Nuevo nombre..." required>
+          </div>
+
+          <button class="btn btn-primary btn-small" type="submit">Cambiar</button>
+        </form>
+      </div>
+    {% empty %}
+      <p class="empty">No hay hilos disponibles.</p>
+    {% endfor %}
+
+  </div>
+</section>
 {% endblock %}

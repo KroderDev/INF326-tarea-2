@@ -1,19 +1,52 @@
+{% load static %}
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <title>{% block title %}HOLA{% endblock %}</title>
-
-  {# Bloque para estilos específicos de cada plantilla #}
+  <link rel="icon" href="{% static 'logo.png' %}" type="image/png">
+  <link rel="stylesheet" href="{% static 'css/usm.css' %}">
   {% block styles %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 
-    {% include "navbar.html" %}  
+    {% include "navbar.html" %}
 
     <main>
         {% block content %}{% endblock %}
     </main>
+
+    <script>
+      const toggleBtn = document.querySelector('[data-toggle-nav]');
+      const navList = document.querySelector('[data-nav]');
+      if (toggleBtn && navList) {
+        toggleBtn.addEventListener('click', () => navList.classList.toggle('is-open'));
+      }
+
+      const userArea = document.querySelector('[data-user-area]');
+      if (userArea) {
+        const handler = () => userArea.classList.toggle('is-open');
+        userArea.querySelector('[data-user-btn]')?.addEventListener('click', handler);
+        document.addEventListener('click', (e) => {
+          if (!userArea.contains(e.target)) userArea.classList.remove('is-open');
+        });
+      }
+
+      const copyBtn = document.querySelector('[data-copy-id]');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          const val = copyBtn.getAttribute('data-copy-id');
+          try {
+            await navigator.clipboard.writeText(val || '');
+            copyBtn.textContent = 'ID copiado';
+            setTimeout(() => copyBtn.textContent = 'Copiar ID', 1400);
+          } catch (e) {
+            copyBtn.textContent = 'No se pudo copiar';
+            setTimeout(() => copyBtn.textContent = 'Copiar ID', 1400);
+          }
+        });
+      }
+    </script>
 
 </body>
 </html>

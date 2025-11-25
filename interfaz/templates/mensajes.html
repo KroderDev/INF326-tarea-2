@@ -1,380 +1,84 @@
 {% extends "base.html" %}
 
 {% block title %}Chat{% endblock %}
-
-{% block styles %}
-<style>
-  :root{
-    --bg:#f5f7fb;
-    --card:#fff;
-    --muted:#6b7280;
-    --accent:#2563eb; /* AZUL */
-  }
-
-  html, body {
-    height: 100%;
-    margin: 0;
-  }
-
-  body{
-    font-family:Inter,system-ui,Arial,sans-serif;
-    background:var(--bg);
-  }
-
-  .chat-wrapper{
-    max-width:620px;
-    margin:0 auto;
-    padding:20px;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box; /* Importante para alturas correctas */
-  }
-
-  h1, h3 {
-    text-align: center;
-    margin: 0 0 8px 0;
-  }
-
-  h3{
-    color: var(--muted);
-    margin-bottom: 20px;
-  }
-
-  /* Ajuste para que ocupe el espacio restante correctamente */
-  .messages-box{
-    background:var(--card);
-    border-radius:12px;
-    padding:20px;
-    box-shadow:0 4px 20px rgba(16,24,40,.08);
-    flex: 1; /* Ocupa el espacio disponible */
-    overflow-y:auto;
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 15px;
-    scroll-behavior: smooth; /* Scroll suave nativo */
-  }
-
-  .msg{
-    margin-bottom:18px;
-    display:flex;
-    flex-direction:column;
-    max-width:80%;
-    animation: fadeIn 0.3s ease; /* Pequeña animación al entrar */
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .msg.you{
-    align-self:flex-end;
-    text-align:right;
-  }
-
-  .msg.other{
-    align-self:flex-start;
-  }
-
-  .msg .sender{
-    font-size:0.85rem;
-    color:var(--muted);
-    margin-bottom:4px;
-  }
-
-  .msg .bubble{
-    background:#e1e8f7;
-    padding:12px 15px;
-    border-radius:14px;
-    font-size:0.95rem;
-    line-height:1.42;
-    white-space:pre-wrap;
-    word-wrap: break-word;
-  }
-
-  .msg.you .bubble{
-    background:var(--accent);
-    color:white;
-  }
-
-  .msg.has-files{
-    max-width:95%;
-  }
-
-  .msg.has-files .bubble{
-    padding:16px 18px;
-    border-radius:16px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    white-space:normal;
-  }
-
-  .attachments{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-    gap:8px;
-    width:100%;
-    margin-top:6px;
-  }
-
-  .file-link{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    padding:6px;
-    border-radius:10px;
-    text-decoration:none;
-    background:rgba(0,0,0,0.02);
-    border:1px solid rgba(0,0,0,0.04);
-    overflow:hidden;
-  }
-
-  .att-thumb{
-    width:100%;
-    max-width:200px;
-    height:auto;
-    border-radius:8px;
-    object-fit:cover;
-    display:block;
-  }
-
-  .file-name {
-      display: inline-block;
-      background: #ffffff;
-      border: 1px solid #2563eb;
-      color: #2563eb;
-      padding: 6px 10px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      word-break: break-all;
-      margin-top: 6px;
-  }
-
-  .msg .timestamp {
-      font-size: 0.7rem;
-      color: #9ca3af;
-      align-self: flex-end;
-      margin-top: 4px;
-  }
-
-  /* 🟦 BOTÓN PEQUEÑO PARA ADJUNTAR ARCHIVOS */
-  .file-btn {
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
-    background: white;
-    border: 1px solid #d1d5db;
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    justify-content:center;
-    align-items:center;
-    font-size: 1.3rem;
-    transition: .15s;
-    position: relative;
-  }
-
-  .file-btn:hover {
-    background:#eef2ff;
-    border-color: var(--accent);
-  }
-
-  .file-btn.active {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
-  }
-
-  .file-count {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: var(--accent);
-    color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 12px;
-    min-width: 18px;
-    text-align: center;
-    display: none;
-  }
-
-  .send-box{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    padding-top: 10px; /* Un poco de aire arriba del input */
-  }
-
-  .send-box input[type="text"]{
-    flex:1;
-    padding:14px 16px;
-    font-size:1rem;
-    border-radius:10px;
-    border:1px solid #d1d5db;
-  }
-
-  .send-box button{
-    padding:0 18px;
-    background:var(--accent);
-    color:white;
-    border:0;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:1rem;
-    transition:.15s;
-    height: 46px; /* Altura fija para alinear con input */
-  }
-
-  .send-box button:hover{
-    opacity:.9;
-    transform:translateY(-1px);
-  }
-</style>
-{% endblock %}
+{% block body_class %}bg-hero{% endblock %}
 
 {% block content %}
-
-<div class="chat-wrapper">
-  <h1>CHAT</h1>
-  <h3>{{ request.session.user }}</h3>
+<section class="messages-shell">
+  <div class="header-row">
+    <div>
+      <p class="subtitle">Conversación</p>
+      <h1 class="headline">Chat</h1>
+    </div>
+    <p class="text-muted">{{ request.session.user }}</p>
+  </div>
 
   <div class="messages-box" id="messages-box">
     {% for m in mensajes %}
-        <div class="msg 
-            {% if m.user == current_user_id %}you{% else %}other{% endif %}
-            {% if m.file %}has-files{% endif %}
-        ">
-            <span class="sender">{{ m.user }}</span>
-
-            <div class="bubble">
-                {{ m.texto }}
-
-                {% if m.file %}
-                <div class="attachments">
-                    {% for file in m.file %}
-                      <a class="file-link" href="{{ file }}" target="_blank">
-                          <img src="{{ file }}" class="att-thumb"
-                             onerror="this.style.display='none'">
-                          <span class="file-name">📎</span>
-                      </a>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="timestamp">{{ m.date }}</div>
-        </div>
+      <div class="msg {% if m.user == current_user_id %}msg--mine{% endif %}">
+        <div class="msg__meta">{{ m.user }} · {{ m.date }}</div>
+        <div class="msg__body">{{ m.texto }}</div>
+        {% if m.file %}
+          <div class="msg__files">
+            {% for file in m.file %}
+              <a class="msg__file" href="{{ file }}" target="_blank">Archivo</a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
     {% endfor %}
   </div>
 
-  <form method="POST" class="send-box" enctype="multipart/form-data">
-      {% csrf_token %}
+  <form method="POST" class="composer" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="text" name="mensaje" placeholder="Escribe un mensaje..." required autocomplete="off">
 
-      <input type="text" name="mensaje" placeholder="Escribe un mensaje..." required autocomplete="off">
+    <label class="file-chip" id="file-chip">
+      📎
+      <input id="file-input" type="file" name="archivos" multiple>
+      <span class="badge" id="file-badge">0</span>
+    </label>
 
-      <label for="file-input" class="file-btn" id="file-btn">
-          📎
-          <span class="file-count" id="file-count">0</span>
-      </label>
-
-      <input id="file-input" type="file" name="archivos" multiple style="display:none;">
-
-      <button type="submit">Enviar</button>
+    <button type="submit" class="btn btn-primary btn-small">Enviar</button>
   </form>
-</div>
-
+</section>
 
 <script>
-// Función para hacer scroll abajo
-function scrollToBottom(smooth = true) {
+function scrollToBottom() {
   const box = document.getElementById("messages-box");
-  if (box) {
-      box.scrollTo({
-          top: box.scrollHeight,
-          behavior: smooth ? 'smooth' : 'auto'
-      });
-  }
+  if (box) box.scrollTop = box.scrollHeight;
 }
-
-// Al cargar la página por primera vez, vamos al fondo de golpe
-window.onload = () => scrollToBottom(false);
+scrollToBottom();
 
 async function refreshMessages() {
   try {
-    // NOTA: Si puedes configurar tu backend para que acepte un parámetro como ?ajax=1
-    // y devuelva SOLO el template_ajax, sería más eficiente.
-    // Aquí asumimos que devuelve la página completa y extraemos los mensajes.
     const resp = await fetch(window.location.href, { cache: "no-store" });
-    
     if (!resp.ok) return;
-
     const html = await resp.text();
-    
-    // Parseamos el HTML recibido
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
-
-    // Obtenemos los nuevos mensajes del HTML descargado
-    // Si usas el template ajax puro, todo el 'doc.body.innerHTML' sería el contenido.
-    // Si devuelves la pagina entera, buscamos el #messages-box
-    let newContent = "";
     const newBox = doc.getElementById("messages-box");
-    
-    if (newBox) {
-        // Si la respuesta es la página completa
-        newContent = newBox.innerHTML;
-    } else {
-        // Si la respuesta es solo el template ajax (lista de divs)
-        newContent = doc.body.innerHTML;
-    }
-
-    const currentBox = document.getElementById("messages-box");
-    
-    // Si el contenido no ha cambiado, no hacemos nada (evita parpadeos)
-    // Nota: Es una comparación básica de strings.
-    if (currentBox.innerHTML.trim() === newContent.trim()) {
-        return;
-    }
-
-    // --- LÓGICA SMART SCROLL ---
-    // Calculamos si el usuario está cerca del final (umbral de 100px)
-    const isNearBottom = currentBox.scrollHeight - currentBox.scrollTop - currentBox.clientHeight < 150;
-
-    // Actualizamos el contenido
-    currentBox.innerHTML = newContent;
-
-    // Solo bajamos si el usuario ya estaba abajo o si es la primera carga
-    if (isNearBottom) {
-        scrollToBottom();
-    }
-
-  } catch (err) {
-    console.error("Error refrescando mensajes:", err);
-  }
+    if (!newBox) return;
+    const current = document.getElementById("messages-box");
+    const isNearBottom = current.scrollHeight - current.scrollTop - current.clientHeight < 150;
+    if (current.innerHTML.trim() === newBox.innerHTML.trim()) return;
+    current.innerHTML = newBox.innerHTML;
+    if (isNearBottom) scrollToBottom();
+  } catch (e) { console.error(e); }
 }
-
-// Ejecutar cada 3 segundos (5000 a veces es mucho para chat)
 setInterval(refreshMessages, 3000);
 
-/* 🟦 ACTUALIZAR BOTÓN Y BADGE (Sin cambios) */
 const fileInput = document.getElementById("file-input");
-const fileBtn = document.getElementById("file-btn");
-const fileCount = document.getElementById("file-count");
-
+const chip = document.getElementById("file-chip");
+const badge = document.getElementById("file-badge");
 fileInput.addEventListener("change", () => {
-    const total = fileInput.files.length;
-
-    if (total > 0) {
-        fileBtn.classList.add("active");
-        fileCount.textContent = total;
-        fileCount.style.display = "inline-block";
-    } else {
-        fileBtn.classList.remove("active");
-        fileCount.style.display = "none";
-    }
+  const total = fileInput.files.length;
+  if (total > 0) {
+    chip.classList.add("has-files");
+    badge.textContent = total;
+  } else {
+    chip.classList.remove("has-files");
+  }
 });
 </script>
 

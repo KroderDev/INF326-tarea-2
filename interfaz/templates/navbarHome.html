@@ -1,29 +1,8 @@
-<nav style="
-  width: 100%;
-  background: #1e293b;
-  padding: 14px 0;
-  display: flex;
-  justify-content: center;
-  font-family: Inter, system-ui, sans-serif;
-">
-  <ul style="
-    list-style: none;
-    display: flex;
-    gap: 40px;
-    margin: 0;
-    padding: 0;
-  ">
-    <li>
-      <a href="{% url 'home' %}" style="
-        color: white;
-        text-decoration: none;
-        font-size: 1.1rem;
-        font-weight: 750;
-        letter-spacing: 0.4px;
-        transition: 0.15s;
-      ">
-        Comunidad UTFSM
-      </a>
-    </li>
-  </ul>
+<nav class="topbar">
+  <div class="topbar__inner">
+    <a class="topbar__brand" href="{% url 'home' %}">
+      <span class="topbar__badge">USM</span>
+      Comunidad UTFSM
+    </a>
+  </div>
 </nav>

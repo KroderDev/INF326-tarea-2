@@ -1,128 +1,46 @@
 {% extends "baseHome.html" %}
 
 {% block title %}Iniciar sesión{% endblock %}
-
-{% block styles %}
-<style>
-  :root{--bg:#f5f7fb;--card:#fff;--muted:#6b7280;--accent:#2563eb}
-
-  body{
-    font-family:Inter,system-ui,Arial,sans-serif;
-    background:var(--bg);
-    margin:0;
-  }
-
-  .btn-invisible {
-      background: none;
-      border: none;
-      padding: 0;
-      color: var(--accent);   /* azul */
-      cursor: pointer;
-      font-weight: 500;
-      font-size: .9rem;
-      text-align: center;
-      text-decoration: none;
-  }
-
-  .page-center{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    height:100vh;
-  }
-
-  .card{
-    background:var(--card);
-    width:100%;
-    max-width:420px;
-    padding:28px;
-    border-radius:12px;
-    box-shadow:0 6px 30px rgba(16,24,40,.08);
-  }
-
-  h1{margin:0 0 8px;font-size:1.4rem}
-  p.lead{margin:0 0 18px;color:var(--muted);font-size:.95rem}
-  .field{margin-bottom:14px}
-  label{display:block;font-size:.85rem;margin-bottom:6px;color:#374151}
-  input[type="text"],input[type="password"]{
-    width:100%;padding:10px 12px;border:1px solid #e6e9ef;
-    border-radius:8px;font-size:0.95rem
-  }
-  button{
-    width:100%;padding:10px 12px;border-radius:8px;border:0;
-    background:var(--accent);color:white;font-weight:600;cursor:pointer
-  }
-  .error{
-    background:#fff1f0;color:#991b1b;border:1px solid #fecaca;
-    padding:10px;border-radius:8px;margin-bottom:12px
-  }
-.online-box {
-    position: absolute;
-    top: 22vh;  /* punto medio aproximado entre navbar y card */
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--card);
-    padding: 10px 18px;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    font-weight: 600;
-    color: #16a34a; /* verde */
-}
-
-.online-box .dot{
-    height: 10px;
-    width: 10px;
-    background: #22c55e; /* verde */
-    border-radius: 50%;
-}
-
-</style>
-{% endblock %}
+{% block body_class %}bg-hero{% endblock %}
 
 {% block content %}
 
-{% if online > 0 %}
-<div class="online-box">
-   🟢 {{ online }} usuarios en línea
+<div class="section stack-center">
+  <div class="online-pill">
+    <span class="online-dot"></span>
+    {% if online > 0 %}
+      {{ online }} usuarios en línea
+    {% else %}
+      No hay usuarios en línea
+    {% endif %}
+  </div>
 </div>
-{% else %}
-<div class="online-box">
-   🔴 No hay usuarios en línea
-</div>
-{% endif %}
 
-<div class="page-center">
-<main class="card" role="main">
+<div class="auth-shell">
+  <div class="card" style="max-width: 420px; width: 100%;">
+    <h1 class="headline" style="margin-bottom:6px;">Iniciar sesión</h1>
+    <p class="text-muted" style="margin-top:0;">Accede con tu usuario y contraseña.</p>
+    {% if err %}<p class="error">Error. {{ err }}</p>{% endif %}
 
-    <h1>Iniciar sesión</h1>
-    <p class="lead">Accede con tu usuario y contraseña.</p>
-  {% if err %}
-    <p class="error">Error. {{ err }}</p>
-  {% endif %}
-
-    <form method="post" novalidate>
+    <form method="post" novalidate class="stack">
       {% csrf_token %}
+      <input name="registrar" type="hidden" value="0">
       <div class="field">
         <label for="username">Usuario</label>
         <input id="username" name="username" type="text" required autofocus>
       </div>
-
       <div class="field">
         <label for="password">Contraseña</label>
         <input id="password" name="password" type="password" required>
       </div>
-
-      <input name="registrar" type="hidden" value="0"> 
-      <button type="submit">Entrar</button>
+      <button type="submit" class="btn btn-primary">Entrar</button>
     </form>
 
-    <form method="post" novalidate>
+    <form method="post" novalidate style="margin-top:12px;">
       {% csrf_token %}
-      <input name="registrar" type="hidden" value="1"> 
-      <button type="submit" class="btn-invisible">Crear cuenta</button>
+      <input name="registrar" type="hidden" value="1">
+      <button type="submit" class="btn btn-accent" style="width:100%;">Crear cuenta</button>
     </form>
-
-</main>
+  </div>
 </div>
 {% endblock %}
-
