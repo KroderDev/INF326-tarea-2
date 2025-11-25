@@ -440,13 +440,7 @@ def chatsbots(request):
     user_id = request.session.get("user_id")  
     if not user_id:
         return redirect("home")  # si no hay sesión, redirige a login   
-    opciones = [
-        #("academico", "Chatbot Académico"),
-        #("utilidad", "Chatbot Utilidad"),
-        #("calculo", "Chatbot Cálculo"),
-        ("wikipedia", "Chatbot Wikipedia"),
-        ("programacion", "Chatbot Programación"),
-    ]
+    opciones = utils.CHATBOT_OPTIONS
 
     if request.method == "GET":
         # Enviar solo nombres bonitos
@@ -454,6 +448,9 @@ def chatsbots(request):
 
     # POST
     eleccion = request.POST.get("chat_bot")  # aquí llega academico / utilidad / ...
+    valid_keys = {key for key, _ in opciones}
+    if eleccion not in valid_keys:
+        return render(request, "chatsbots.html", {"chatsbots": opciones, "error": "Chatbot no reconocido"})
 
     return redirect("chatbot_view", tipo=eleccion)
 
@@ -462,6 +459,9 @@ def chatbot_view(request, tipo):
     user_id = request.session.get("user_id")  
     if not user_id:
         return redirect("home")  # si no hay sesión, redirige a login   
+    valid_chatbots = {key for key, _ in utils.CHATBOT_OPTIONS}
+    if tipo not in valid_chatbots:
+        return redirect("chatsbots")
     historial = request.session.get(f"chat_{tipo}", [])
     user_name = request.session.get("user", "Tú")
 

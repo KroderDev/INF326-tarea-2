@@ -14,6 +14,7 @@
       <span class="text-muted">{{ chatsbots|length }} disponibles</span>
     </div>
     <p class="text-muted" style="margin:0;">Elige el asistente adecuado y solicita su apoyo!</p>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
   </div>
 
   <div class="card-grid">

@@ -3,22 +3,60 @@ import json
 import os
 import uuid
 from typing import Tuple, Dict, Any, Optional, List
-#from typing import List, Tuple, Any
-NOMBRE_JSON = r"mapChatsHilos.json"
-URLS = {
-    "canales": "https://channel-api.inf326.nur.dev",
-    "mensajes": "https://messages-service.kroder.dev",
-    "moderacion": "https://demo.inf326.nur.dev/moderation/api/v1/docs",
-    "presencia": "https://presence-134-199-176-197.nip.io",
-    "busqueda": "search-service https://searchservice.inf326.nursoft.dev/",
-    "usuarios": "https://users.inf326.nursoft.dev",
-    
-    "archivos": "http://file-service-134-199-176-197.nip.io",
-    "hilos":  "https://threads.inf326.nursoft.dev",
 
-    "wikipedia": "http://wikipedia-chatbot-134-199-176-197.nip.io",
-    "chatbot-programación":  "https://chatbotprogra.inf326.nursoft.dev",
+NOMBRE_JSON = r"mapChatsHilos.json"
+
+API_GATEWAY_URL = os.getenv("API_GATEWAY_URL", "https://api-group04.kroder.dev").rstrip("/")
+API_GATEWAY_ALT_URL = os.getenv("API_GATEWAY_ALT_URL", "https://api-group04.inf326.nursoft.dev").rstrip("/")
+GATEWAY_BASES = [u for u in dict.fromkeys([API_GATEWAY_URL, API_GATEWAY_ALT_URL]) if u]
+GATEWAY_BASE = GATEWAY_BASES[0] if GATEWAY_BASES else ""
+
+URLS = {
+    "canales": f"{GATEWAY_BASE}/channels",
+    "mensajes": f"{GATEWAY_BASE}/messages",
+    "moderacion": f"{GATEWAY_BASE}/moderation",
+    "presencia": f"{GATEWAY_BASE}/presence",
+    "busqueda": f"{GATEWAY_BASE}/search",
+    "usuarios": f"{GATEWAY_BASE}/users",
+    "archivos": f"{GATEWAY_BASE}/files",
+    "hilos": f"{GATEWAY_BASE}/threads",
 }
+
+CHATBOT_ENDPOINTS = {
+    "academico": {
+        "path": "/chatbot-academico/chat",
+        "request_key": "message",
+        "response_keys": ("reply", "message", "answer"),
+    },
+    "utilidad": {
+        "path": "/chatbot-utilidad/chat",
+        "request_key": "message",
+        "response_keys": ("reply", "message", "result"),
+    },
+    "calculo": {
+        "path": "/chatbot-calculo/chat",
+        "request_key": "message",
+        "response_keys": ("reply", "message", "result"),
+    },
+    "wikipedia": {
+        "path": "/chatbot-wikipedia/chat-wikipedia",
+        "request_key": "message",
+        "response_keys": ("message", "reply"),
+    },
+    "programacion": {
+        "path": "/chatbot-programming/chat",
+        "request_key": "message",
+        "response_keys": ("reply", "message"),
+    },
+}
+
+CHATBOT_OPTIONS = [
+    ("academico", "Chatbot Academico"),
+    ("utilidad", "Chatbot Utilidad"),
+    ("calculo", "Chatbot Calculo"),
+    ("wikipedia", "Chatbot Wikipedia"),
+    ("programacion", "Chatbot Programacion"),
+]
 #------------------ USUARIOS ------------------
 
 def API_LogIn(user, password):
@@ -915,41 +953,37 @@ def create_thread(channel_id: str, thread_name: str, user_id: str):
     return True, data
 #------------------ CHAT BOTS ------------------
 def API_CB(tipo, texto):
-    #if tipo == "academico":
-        #return "Respuesta del chatbot académico."
+    config = CHATBOT_ENDPOINTS.get(tipo)
+    if not config:
+        return "No entiendo la solicitud."
 
-    #if tipo == "utilidad":
-        #return "Aquí tienes una utilidad."
+    payload = {config.get("request_key", "message"): texto}
+    errores = []
 
-   # if tipo == "calculo":
-        #return "Resultado matemático."
-
-    if tipo == "wikipedia":
-        url = URLS["wikipedia"] + "/chat-wikipedia"
-        body = {"message": texto}  # lo que enviarás en el body
+    for base in GATEWAY_BASES or [""]:
+        url = f"{base.rstrip('/')}{config['path']}"
         try:
-            response = requests.post(url, json=body)  # POST con JSON
-            response.raise_for_status()  # lanza error si falla
-            data = response.json()  # asumiendo que la API retorna JSON
-            # Aquí devuelves lo que la API retorne; depende del formato
-            return data.get("message", "No se obtuvo respuesta del servidor")
-        except requests.exceptions.RequestException as e:
-            return f"Error al contactar la API: {e}"
+            response = requests.post(url, json=payload, timeout=12)
+        except requests.exceptions.RequestException as exc:
+            errores.append(f"{base or 'sin_base'}: {exc}")
+            continue
 
-    if tipo == "programacion":
-        #HACER UN POST A LA URL Y PONER EN EL BODY text
-        url = URLS["chatbot-programación"] + "/chat"
-        body = {"message": texto}  # lo que enviarás en el body
         try:
-            response = requests.post(url, json=body)  # POST con JSON
-            response.raise_for_status()  # lanza error si falla
-            data = response.json()  # asumiendo que la API retorna JSON
-            # Aquí devuelves lo que la API retorne; depende del formato
-            return data.get("reply", "No se obtuvo respuesta del servidor")
-        except requests.exceptions.RequestException as e:
-            return f"Error al contactar la API: {e}"
+            data = response.json()
+        except ValueError:
+            data = {"raw": response.text}
 
-    return "No entiendo la solicitud."
+        if response.ok:
+            for key in config.get("response_keys", ()):
+                if isinstance(data, dict) and data.get(key) is not None:
+                    return data.get(key)
+            if isinstance(data, dict) and len(data) == 1:
+                return next(iter(data.values()))
+            return str(data)
+
+        errores.append(f"{base or 'sin_base'}: HTTP {response.status_code}")
+
+    return f"Error al contactar la API ({'; '.join(errores)})"
 
 #------------------ MENSAJES ------------------
 """
