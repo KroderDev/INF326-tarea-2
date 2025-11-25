@@ -1,0 +1,28 @@
+name: Interfaz Image
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          registry: registry.kroder.dev
+          username: ${{ secrets.HARBOR_ROBOT_USER }}
+          password: ${{ secrets.HARBOR_ROBOT_TOKEN }}
+
+      - name: Build & push interfaz
+        env:
+          IMAGE: registry.kroder.dev/utfsm/interfaz
+        run: |
+          docker build -f interfaz/dockerfile -t $IMAGE:${{ github.sha }} -t $IMAGE:latest interfaz
+          docker push $IMAGE:${{ github.sha }}
+          docker push $IMAGE:latest
