@@ -1,8 +1,11 @@
+{% load static %}
 <nav class="topbar">
   <div class="topbar__inner">
-    <a class="topbar__brand" href="{% url 'home' %}">
-      <span class="topbar__badge">USM</span>
-      Comunidad UTFSM
-    </a>
+    <div class="topbar__brand-wrap">
+      <a class="topbar__brand" href="{% url 'home' %}">
+        <img src="{% static 'logo.png' %}" alt="USM" class="topbar__logo">
+        <span>Universidad Técnica Federico Santa María</span>
+      </a>
+    </div>
   </div>
 </nav>

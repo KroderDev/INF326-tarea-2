@@ -12,13 +12,17 @@
 
   <div class="card-grid">
     {% for tipo, nombre in chatsbots %}
-      <div class="tile stack">
-        <h3 style="margin:0;">{{ nombre }}</h3>
-        <form method="POST">
-          {% csrf_token %}
-          <input type="hidden" name="chat_bot" value="{{ tipo }}">
-          <button type="submit" class="btn btn-primary btn-small">Abrir</button>
-        </form>
+      <div class="tile">
+        <div>
+          <h3 class="tile__title">{{ nombre }}</h3>
+        </div>
+        <div class="tile__actions">
+          <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="chat_bot" value="{{ tipo }}">
+            <button type="submit" class="btn btn-primary btn-small">Abrir</button>
+          </form>
+        </div>
       </div>
     {% empty %}
       <p class="empty">No hay chats disponibles.</p>

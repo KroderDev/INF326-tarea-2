@@ -16,21 +16,109 @@
     {% for msg in historial %}
       <div class="msg {% if msg.sender == 'user' %}msg--mine{% endif %}">
         <div class="msg__meta">{{ msg.sender|capfirst }}</div>
-        <div class="msg__body">{{ msg.text }}</div>
+        <div class="msg__body" data-bot="{% if msg.sender == 'bot' %}1{% else %}0{% endif %}" data-md="{{ msg.text|escapejs }}">{{ msg.text }}</div>
       </div>
     {% endfor %}
   </div>
 
-  <form method="POST" class="composer">
+  <form method="POST" class="composer no-loader" id="chat-form">
     {% csrf_token %}
-    <input type="text" name="mensaje" placeholder="Escribe un mensaje..." required>
+    <input type="text" name="mensaje" id="chat-input" placeholder="Escribe un mensaje..." required autocomplete="off">
     <button type="submit" class="btn btn-primary btn-small">Enviar</button>
   </form>
 </section>
 
 <script>
   const box = document.getElementById("msgBox");
-  if (box) box.scrollTop = box.scrollHeight;
+  const form = document.getElementById("chat-form");
+  const input = document.getElementById("chat-input");
+  const csrfToken = document.querySelector('input[name=\"csrfmiddlewaretoken\"]').value;
+
+  function scrollBottom() {
+    if (box) box.scrollTop = box.scrollHeight;
+  }
+  scrollBottom();
+
+  const escapeHtml = (str) => str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  function renderMarkdown(md) {
+    const safe = escapeHtml(md || "");
+    return safe
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.+?)\*/g, "<em>$1</em>")
+      .replace(/```([\\s\\S]*?)```/g, "<pre><code>$1</code></pre>")
+      .replace(/`([^`]+?)`/g, "<code>$1</code>")
+      .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+      .replace(/\n/g, "<br>");
+  }
+
+  function hydrateExisting() {
+    document.querySelectorAll('#msgBox .msg__body[data-bot="1"]').forEach(el => {
+      const md = el.dataset.md || el.textContent || "";
+      el.innerHTML = renderMarkdown(md);
+    });
+  }
+  hydrateExisting();
+
+  function addBubble(sender, text, isBot=false, typing=false) {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg' + (sender === 'user' ? ' msg--mine' : '');
+    const meta = document.createElement('div');
+    meta.className = 'msg__meta';
+    meta.textContent = sender;
+    const body = document.createElement('div');
+    body.className = 'msg__body';
+    if (typing) {
+      body.classList.add('typing-bubble');
+      for (let i = 0; i < 3; i++) {
+        const d = document.createElement('span');
+        d.className = 'typing-dot';
+        body.appendChild(d);
+      }
+    } else {
+      body.innerHTML = isBot ? renderMarkdown(text) : escapeHtml(text);
+    }
+    wrap.appendChild(meta);
+    wrap.appendChild(body);
+    wrap.dataset.typing = typing ? '1' : '0';
+    box.appendChild(wrap);
+    scrollBottom();
+    return wrap;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+
+    addBubble('user', text);
+    input.value = '';
+
+    const typingBubble = addBubble('bot', '', true, true);
+
+    const body = new FormData();
+    body.append('csrfmiddlewaretoken', csrfToken);
+    body.append('mensaje', text);
+
+    try {
+        const resp = await fetch(window.location.href, {
+            method: 'POST',
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            body
+        });
+        const data = await resp.json();
+        typingBubble.remove();
+        addBubble('bot', data.bot ?? 'Sin respuesta', true);
+    } catch (err) {
+        typingBubble.remove();
+        addBubble('bot', 'Error obteniendo respuesta', true);
+    }
+  });
 </script>
 
 {% endblock %}

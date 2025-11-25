@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from . import utils
 # Create your views here.
 from django.shortcuts import render
@@ -447,12 +448,16 @@ def chatbot_view(request, tipo):
 
     if request.method == "POST":
         user_msg = request.POST.get("mensaje")
-        historial.append({"sender": "user", "text": user_msg})
+        if user_msg:
+            historial.append({"sender": "user", "text": user_msg})
 
-        respuesta = utils.API_CB(tipo, user_msg)
-        historial.append({"sender": "bot", "text": respuesta})
+            respuesta = utils.API_CB(tipo, user_msg)
+            historial.append({"sender": "bot", "text": respuesta})
 
-        request.session[f"chat_{tipo}"] = historial
+            request.session[f"chat_{tipo}"] = historial
+
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"bot": respuesta})
 
     return render(request, "chat_template.html", {
         "tipo": tipo.capitalize(),
