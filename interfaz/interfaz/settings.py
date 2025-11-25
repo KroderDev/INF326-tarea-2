@@ -26,6 +26,10 @@ SECRET_KEY = 'django-insecure-$=h%i&phun+56lbyla8r2xgcp^z0ry(tkxsz-=c_x1#a$1_7jb
 DEBUG = True
 
 ALLOWED_HOSTS = ['chat-grupo04.inf326.nursoft.dev', 'chat-utfsm.kroder.dev', 'localhost', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = [
+    "https://chat-grupo04.inf326.nursoft.dev",
+    "https://chat-utfsm.kroder.dev",
+]
 
 
 # Application definition

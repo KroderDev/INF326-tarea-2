@@ -17,7 +17,7 @@ spec:
       containers:
         - name: interfaz
           image: registry.kroder.dev/utfsm/interfaz:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
               name: http
