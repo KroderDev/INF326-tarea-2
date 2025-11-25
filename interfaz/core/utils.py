@@ -772,7 +772,7 @@ def get_channel_threads(channel_id: str):
     print("NUEVA DATAA: ",data)
     # Retorna True y la lista de hilos
     return True, data
-
+'''
 def ManageHilo(action, channel_id, uid=None, new_name=None):
 
     path = NOMBRE_JSON
@@ -868,6 +868,47 @@ def ManageHilo(action, channel_id, uid=None, new_name=None):
         return True, {"uid": uid, "removed": removed, "hilos": lst}
 
     return False, {"error": f"Acción desconocida: {action}"}
+'''
+def edit_thread(thread_id: str, title: str, metadata: dict = None):
+    """
+    Edita un hilo existente (PUT /threads/{thread_id}/edit).
+    Requiere thread_id, title y opcionalmente metadata.
+    """
+    # Construcción de la URL según la documentación: /threads/{thread_id}/edit
+    url = f"{URLS['hilos']}/threads/threads/{thread_id}/edit"
+    
+    # Si no envían metadata, iniciamos un diccionario vacío para cumplir con el esquema
+    if metadata is None:
+        metadata = {}
+
+    # Preparamos el cuerpo de la petición (Request body)
+    payload = {
+        "title": title,
+        "metadata": metadata
+    }
+
+    try:
+        # Usamos requests.put para enviar datos al servidor
+        # El argumento 'json=' se encarga de convertir el diccionario a JSON 
+        # y poner el header Content-Type: application/json automáticamente.
+        resp = requests.put(url, json=payload, timeout=10)
+        
+    except requests.RequestException as e:
+        return False, {"error": f"Error de red: {e}"}
+
+    # Validamos el código de éxito (según tu doc es 200)
+    if resp.status_code != 200:
+        return False, {"error": f"Status {resp.status_code}: {resp.text}"}
+
+    try:
+        # Intentamos parsear la respuesta
+        data = resp.json()
+    except:
+        # Si la API devuelve solo un string plano sin comillas o nada, manejamos el error
+        # O podrías devolver resp.text si esperas texto plano.
+        return False, {"error": "Respuesta JSON inválida"}
+
+    return True, data
 
 def delete_thread(thread_id: str):
     url = f"{URLS['hilos']}/threads/threads/{thread_id}"
@@ -885,6 +926,27 @@ def delete_thread(thread_id: str):
         data = {}
 
     return True, data
+"""
+def delete_thread(thread_id: str):
+    url = f"{URLS['hilos']}/threads/threads/{thread_id}"
+    print("DELETE URL:", url)
+
+    try:
+        resp = requests.delete(url, timeout=10)
+    except requests.RequestException as e:
+        return False, {"error": f"Error de red: {e}"}
+
+    # La API solo devuelve 204
+    if resp.status_code == 204:
+        return True, {"message": "Hilo eliminado correctamente"}
+
+    # Si devuelve error, lo retornamos
+    try:
+        data = resp.json()
+        return False, {"error": f"Status {resp.status_code}", "detail": data}
+    except:
+        return False, {"error": f"Status {resp.status_code}", "detail": resp.text}
+"""
 
 def create_thread(channel_id: str, thread_name: str, user_id: str):
     url = f"{URLS['hilos']}/threads/threads/"

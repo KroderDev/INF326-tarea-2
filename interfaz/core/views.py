@@ -262,11 +262,12 @@ def mod_hilos(request):
             hilo = request.POST.get('hilo')
             print("DEBUG DELETE uid =", request.session["hilos_all"])
             if action == "rename":
-                flag, resp = utils.ManageHilo("rename",
-                        str(request.session["canales_all"][request.session["chat_actual"]][0]).strip(),
-                        uid=request.session["hilos_all"][hilo],
-                        new_name=request.POST.get("new_name"))
-                if not flag: return render(request, "mod_hilo.html",{'Hilos':request.session["hilos_all"], 'Err_mod':resp["error"]})
+                ok, resp = utils.edit_thread(request.session["hilos_all"][hilo], request.POST.get("new_name"))
+                if ok:
+                    print("Hilo eliminado:", resp)
+                else:
+                    print("Error:", resp["error"])
+                    return render(request, "mod_hilo.html",{'Hilos':request.session["hilos_all"], 'Err_mod':resp["error"]})
             elif action == "delete":
                 ok, resp = utils.delete_thread(request.session["hilos_all"][hilo])
                 if ok:
