@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: interfaz
+  name: grupo04-interfaz
   annotations:
     argocd.argoproj.io/sync-wave: "8"
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -10,29 +10,29 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - app.inf326.nursoft.dev
-      secretName: app-inf326-nursoft-dev-tls
+        - chat-grupo04.inf326.nursoft.dev
+      secretName: chat-grupo04-inf326-nursoft-dev-tls
     - hosts:
-        - app.kroder.dev
-      secretName: app-kroder-dev-tls
+        - chat-utfsm.kroder.dev
+      secretName: chat-utfsm-kroder-dev-tls
   rules:
-    - host: app.inf326.nursoft.dev
+    - host: chat-grupo04.inf326.nursoft.dev
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: interfaz
+                name: grupo04-interfaz
                 port:
                   number: 80
-    - host: app.kroder.dev
+    - host: chat-utfsm.kroder.dev
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: interfaz
+                name: grupo04-interfaz
                 port:
                   number: 80

@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: interfaz
+  name: grupo04-interfaz
   labels:
-    app: interfaz
+    app: grupo04-interfaz
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: interfaz
+      app: grupo04-interfaz
   template:
     metadata:
       labels:
-        app: interfaz
+        app: grupo04-interfaz
     spec:
       containers:
         - name: interfaz
