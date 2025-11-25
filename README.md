@@ -72,26 +72,9 @@ flowchart LR
 
        python manage.py runserver
 
-
-
-- Las credenciales empleadas para el testing:
-
-  
-       Usuario1: felipe.durana
-
-       Clave1: Colocolo91
-
-       Usuario2: felipe.duran
-
-       Clave2: Colocolo
-
 - Video demostrativo:
  
  [Video demostrativo](https://github.com/user-attachments/assets/613c4b59-204e-4ebc-b017-0d124e16da58)
-
-
-
-
 
 ## Tools
 - [`tools/`](tools/) tiene scripts de benchmarking, ver [`tools/README.md`](tools/README.md).
