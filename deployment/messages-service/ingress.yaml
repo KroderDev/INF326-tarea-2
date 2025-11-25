@@ -10,13 +10,13 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - messages-service.inf326.cl
-      secretName: messages-service-inf326-cl-tls
+        - messages-service.inf326.nursoft.dev
+      secretName: messages-service-inf326-nursoft-dev-tls
     - hosts:
         - messages-service.kroder.dev
       secretName: messages-service-kroder-dev-tls
   rules:
-    - host: messages-service.inf326.cl
+    - host: messages-service.inf326.nursoft.dev
       http:
         paths:
           - path: /

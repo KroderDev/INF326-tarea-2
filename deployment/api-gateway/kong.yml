@@ -9,8 +9,8 @@ services:
     routes:
       - name: users-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /users
         strip_path: true
@@ -26,8 +26,8 @@ services:
     routes:
       - name: channels-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /channels
         strip_path: true
@@ -43,8 +43,8 @@ services:
     routes:
       - name: threads-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /threads
         strip_path: true
@@ -60,8 +60,8 @@ services:
     routes:
       - name: messages-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /messages
         strip_path: true
@@ -77,8 +77,8 @@ services:
     routes:
       - name: presence-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /presence
         strip_path: true
@@ -94,8 +94,8 @@ services:
     routes:
       - name: moderation-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /moderation
         strip_path: true
@@ -111,8 +111,8 @@ services:
     routes:
       - name: files-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /files
         strip_path: true
@@ -128,8 +128,8 @@ services:
     routes:
       - name: search-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /search
         strip_path: true
@@ -145,8 +145,8 @@ services:
     routes:
       - name: chatbot-academico-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /chatbot-academico
         strip_path: true
@@ -162,8 +162,8 @@ services:
     routes:
       - name: chatbot-utilidad-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /chatbot-utilidad
         strip_path: true
@@ -179,8 +179,8 @@ services:
     routes:
       - name: chatbot-calculo-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /chatbot-calculo
         strip_path: true
@@ -196,8 +196,8 @@ services:
     routes:
       - name: chatbot-wikipedia-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /chatbot-wikipedia
         strip_path: true
@@ -213,8 +213,8 @@ services:
     routes:
       - name: chatbot-programming-api
         hosts:
-          - api.grupo04.inf326.cl
-          - api-utfsm.kroder.dev
+          - api-group04.inf326.nursoft.dev
+          - api-group04.kroder.dev
         paths:
           - /chatbot-programming
         strip_path: true
@@ -227,7 +227,7 @@ plugins:
   - name: cors
     config:
       origins:
-        - https://app.inf326.cl
+        - https://app.inf326.nursoft.dev
         - https://app.kroder.dev
       methods:
         - GET

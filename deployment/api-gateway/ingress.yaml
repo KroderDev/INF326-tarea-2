@@ -15,13 +15,13 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - api.grupo04.inf326.cl
-      secretName: api-grupo04-inf326-cl-tls
+        - api-group04.inf326.nursoft.dev
+      secretName: api-group04-inf326-nursoft-dev-tls
     - hosts:
-        - api-utfsm.kroder.dev
-      secretName: api-utfsm-kroder-dev-tls
+        - api-group04.kroder.dev
+      secretName: api-group04-kroder-dev-tls
   rules:
-    - host: api.grupo04.inf326.cl
+    - host: api-group04.inf326.nursoft.dev
       http:
         paths:
           - path: /
@@ -31,7 +31,7 @@ spec:
                 name: grupo04-kong-proxy
                 port:
                   number: 80
-    - host: api-utfsm.kroder.dev
+    - host: api-group04.kroder.dev
       http:
         paths:
           - path: /
