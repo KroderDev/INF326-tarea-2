@@ -692,7 +692,7 @@ def GetHilosAPI(channel_id: str):
     Llama a la API GET /channel/get_threads y retorna
     una lista de tuplas (thread_id, title).
     """
-    url = f"{URLS["hilos"]}/threads/channel/get_threads"
+    url = f"{URLS['hilos']}/threads/channel/get_threads"
     params = {"channel_id": channel_id}
 
     try:
@@ -729,7 +729,6 @@ def GetHilosAPI(channel_id: str):
     ]
 
     return resultados
-'''
 def ManageHilo(action, channel_id, uid=None, new_name=None):
 
     path = NOMBRE_JSON
@@ -825,9 +824,9 @@ def ManageHilo(action, channel_id, uid=None, new_name=None):
         return True, {"uid": uid, "removed": removed, "hilos": lst}
 
     return False, {"error": f"Acción desconocida: {action}"}
-'''
+
 def delete_thread(thread_id: str):
-    url = f"{URLS["hilos"]}/threads/threads/{thread_id}"
+    url = f"{URLS['hilos']}/threads/threads/{thread_id}"
     try:
         resp = requests.delete(url, timeout=10)
     except requests.RequestException as e:
@@ -905,7 +904,7 @@ def API_CB(tipo, texto):
     return "No entiendo la solicitud."
 
 #------------------ MENSAJES ------------------
-def formatear_uuid(uid: str) -> str:
+def formatear_uuid(uid: str) -> str | None:
     """
     Recibe un UID que puede ser sin guiones o ya formateado y devuelve
     un UUID estándar con guiones. Si el UID no es válido, devuelve None.
@@ -930,7 +929,7 @@ def formatear_uuid(uid: str) -> str:
     except ValueError:
         return None
 
-def enviar_mensaje(thread_id: str, user_id: str, contenido: str):
+def enviar_mensaje(thread_id: str, user_id: str, contenido: str) -> dict | None:
     """
     Envía un mensaje de tipo texto a un hilo específico.
     
@@ -939,22 +938,26 @@ def enviar_mensaje(thread_id: str, user_id: str, contenido: str):
     :param contenido: Texto del mensaje
     :return: Diccionario con la respuesta JSON si fue exitosa, o None si falló
     """
-    thread_id = formatear_uuid(thread_id)
-    user_id = formatear_uuid(user_id)
-    print("################### USER ID: ",user_id)
-    print("################### thread ID: ",thread_id)
-    url = URLS["mensajes"]+f"/threads/{thread_id}/messages"
+    tid = formatear_uuid(thread_id)
+    uid = formatear_uuid(user_id)
+    if tid is None or uid is None:
+        print("IDs de hilo/usuario no validos, no se envia el mensaje.")
+        return None
+
+    print("################### USER ID: ", uid)
+    print("################### thread ID: ", tid)
+    url = f"{URLS['mensajes']}/threads/{tid}/messages"
     headers = {
         "accept": "application/json",
-        "X-User-Id": user_id,
-        "Content-Type": "application/json"
+        "X-User-Id": uid,
+        "Content-Type": "application/json",
     }
     payload = {
         "content": contenido,
         "type": "text",
-        "paths": ["string"]
+        "paths": ["string"],
     }
-    
+
     try:
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()  # Lanza excepción si status >= 400
@@ -964,8 +967,11 @@ def enviar_mensaje(thread_id: str, user_id: str, contenido: str):
         return None
 
 def obtener_mensajes(thread_id, limit=50, cursor=None):
-    thread_id = formatear_uuid(thread_id)
-    url = URLS["mensajes"]+f"/threads/{thread_id}/messages"
+    tid = formatear_uuid(thread_id)
+    if tid is None:
+        print("Thread ID invalido, no se pueden obtener mensajes.")
+        return {}
+    url = f"{URLS['mensajes']}/threads/{tid}/messages"
     params = {"limit": limit}
     if cursor:
         params["cursor"] = cursor
@@ -984,9 +990,6 @@ def obtener_mensajes(thread_id, limit=50, cursor=None):
     except json.JSONDecodeError as e:
         print(f"Error al parsear JSON: {e}")
         return {}
-
-
-#------------------ MENSAJES ------------------
 
 def obtener_archivos_por_mensajes(thread_id: str, message_ids: List[str]) -> dict:
     """
@@ -1033,7 +1036,7 @@ def GetArchivos(thread_id: str, message_ids: List[str]) -> Tuple[List[Any], Any]
     # 1) Obtener archivos agrupados por message_id
     resultado = obtener_archivos_por_mensajes(thread_id, message_ids)
     if not resultado.get("ok"):
-        return None, resultado.get("error")
+        return [], resultado.get("error")
 
     files_by_message = resultado["files_by_message"]
     base = URLS["archivos"].rstrip("/")

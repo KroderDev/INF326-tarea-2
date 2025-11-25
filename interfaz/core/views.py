@@ -328,11 +328,13 @@ def mensajes(request):
                 print(f"Error al enviar mensaje")
             else:
                 mensaje_id = api_response.get("id")
-                if len(archivos) > 0:
+                if not mensaje_id:
+                    print("No se recibio id de mensaje, se omite la subida de archivos.")
+                elif len(archivos) > 0:
                     for f in archivos:
                         # Llama a la funcion de subida
                         resultado = utils.subir_archivo(
-                            message_id=mensaje_id,
+                            message_id=str(mensaje_id),
                             thread_id=thread_id,
                             archivo=f
                         )
