@@ -107,7 +107,7 @@
     const text = input.value.trim();
     if (!text) return;
 
-    addBubble('user', text);
+    addBubble(currentUser, text);
     input.value = '';
 
     const typingBubble = addBubble('bot', '', true, true);

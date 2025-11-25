@@ -6,7 +6,7 @@ from typing import Tuple, Dict, Any, Optional, List
 
 NOMBRE_JSON = r"mapChatsHilos.json"
 
-API_GATEWAY_URL = os.getenv("API_GATEWAY_URL", "https://api-group04.kroder.dev").rstrip("/")
+API_GATEWAY_URL = os.getenv("API_GATEWAY_URL", "https://api-utfsm.kroder.dev").rstrip("/")
 API_GATEWAY_ALT_URL = os.getenv("API_GATEWAY_ALT_URL", "https://api-group04.inf326.nursoft.dev").rstrip("/")
 GATEWAY_BASES = [u for u in dict.fromkeys([API_GATEWAY_URL, API_GATEWAY_ALT_URL]) if u]
 GATEWAY_BASE = GATEWAY_BASES[0] if GATEWAY_BASES else ""
@@ -907,7 +907,7 @@ def ManageHilo(action, channel_id, uid=None, new_name=None):
 
     return False, {"error": f"Acción desconocida: {action}"}
 '''
-def edit_thread(thread_id: str, title: str, metadata: dict = None):
+def edit_thread(thread_id: str, title: str, metadata: Optional[Dict[str, Any]] = None):
     """
     Edita un hilo existente (PUT /threads/{thread_id}/edit).
     Requiere thread_id, title y opcionalmente metadata.

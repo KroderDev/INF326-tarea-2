@@ -409,8 +409,10 @@ main { padding: 18px 18px 50px; }
   margin: 20px auto;
   padding: 0 16px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+  align-items: stretch;
+  grid-auto-rows: 1fr;
 }
 .tile {
   background: #fff;
@@ -422,6 +424,7 @@ main { padding: 18px 18px 50px; }
   flex-direction: column;
   gap: 10px;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  height: 100%;
 }
 .tile:hover { transform: translateY(-3px); box-shadow: 0 18px 36px rgba(15,23,42,0.16); }
 .tile__title { margin: 0; font-size: 1.05rem; }
