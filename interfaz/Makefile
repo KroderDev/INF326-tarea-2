@@ -1,10 +1,10 @@
 deps:
 	python -m pip install -r requirements.txt
 
-compose:
+up:
 	docker-compose up -d --build
 
-compose-down:
+down:
 	docker-compose down
 
 image:
@@ -14,4 +14,4 @@ print:
 	python -m black .
 	python -m isort .
 
-.PHONY: deps compose compose-down image test print
+.PHONY: deps up down image test print
