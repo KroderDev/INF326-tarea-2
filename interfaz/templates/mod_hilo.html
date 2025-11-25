@@ -8,7 +8,7 @@
   <div class="card">
     <h2 class="section-title">Crear hilo</h2>
     {% if Err_create %}
-      <p class="error">Error creando el hilo. {{ Err_del }}</p>
+      <p class="error">Error creando el hilo. {{ Err_create }}</p>
     {% endif %}
     <form method="POST" class="stack">
       {% csrf_token %}

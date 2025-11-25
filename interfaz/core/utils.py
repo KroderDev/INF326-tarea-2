@@ -907,7 +907,7 @@ def edit_thread(thread_id: str, title: str, metadata: Optional[Dict[str, Any]] =
     Requiere thread_id, title y opcionalmente metadata.
     """
     # Construcción de la URL según la documentación: /threads/{thread_id}/edit
-    url = f"{URLS['hilos']}/{thread_id}/edit"
+    url = f"{URLS['hilos']}/threads/{thread_id}/edit"
     
     # Si no envían metadata, iniciamos un diccionario vacío para cumplir con el esquema
     if metadata is None:
@@ -943,7 +943,7 @@ def edit_thread(thread_id: str, title: str, metadata: Optional[Dict[str, Any]] =
     return True, data
 
 def delete_thread(thread_id: str):
-    url = f"{URLS['hilos']}/{thread_id}"
+    url = f"{URLS['hilos']}/threads/{thread_id}"
     try:
         resp = requests.delete(url, timeout=10)
     except requests.RequestException as e:
@@ -981,29 +981,36 @@ def delete_thread(thread_id: str):
 """
 
 def create_thread(channel_id: str, thread_name: str, user_id: str):
-    url = f"{URLS['hilos']}/"
-    print(url)
+    """
+    Crea un hilo vía POST /threads/ (query params: channel_id, thread_name, user_id).
+    Devuelve (True, data) en éxito o (False, {"error": ...}) con detalles.
+    """
+    if not channel_id or not thread_name or not user_id:
+        return False, {"error": "channel_id, thread_name y user_id son obligatorios"}
+
+    url = f"{URLS['hilos']}/threads/"
     params = {
-        "channel_id": channel_id,
-        "thread_name": thread_name,
-        "user_id": user_id,
+        "channel_id": str(channel_id),
+        "thread_name": str(thread_name),
+        "user_id": str(user_id),
     }
 
     try:
-        resp = requests.post(url, params=params, timeout=10, allow_redirects=False)
+        resp = requests.post(url, params=params, timeout=10)
     except requests.RequestException as e:
         return False, {"error": f"Error de red: {e}"}
-    print("REQUEST URL:", resp.request.url)            # URL final enviada (con query)
-    print("REQUEST METHOD:", resp.request.method)
-    print("STATUS:", resp.status_code)
-    print("HEADERS (respuesta):", resp.headers)
-    print("LOCATION header:", resp.headers.get("Location"))
-    if resp.status_code != 200:
-        return False, {"error": f"Status {resp.status_code}: {resp.text}"}
+
+    if resp.status_code not in (200, 201):
+        # Intentar extraer detalle si es un 422 u otro error
+        try:
+            detail = resp.json()
+        except Exception:
+            detail = resp.text
+        return False, {"error": f"Status {resp.status_code}", "detail": detail}
 
     try:
         data = resp.json()
-    except:
+    except Exception:
         return False, {"error": "Respuesta JSON inválida desde la API"}
 
     return True, data

@@ -248,16 +248,21 @@ def mod_hilos(request):
         print("La accion es: ", action)
         #print("DEBUG DELETE uid =", request.session["hilos_all"][hilo], " Accion: ",action)
         if action == "create":
+            new_name = (request.POST.get("new_name") or "").strip()
+            if not new_name:
+                return render(request, "mod_hilo.html",{'Chats':request.session["hilos_all"], 'Err_create':"Debes ingresar un nombre para el hilo."})
             ok, resp = utils.create_thread(
                 channel_id=str(request.session["canales_all"][request.session["chat_actual"]][0]).strip(),
-                thread_name=request.POST.get("new_name"),
+                thread_name=new_name,
                 user_id=request.session.get("user_id")
             )
             if ok:
                 print("Hilo creado:", resp)
             else:
-                print("Error creando un hilo . Error: ",resp["error"])
-                return render(request, "mod_hilo.html",{'Chats':request.session["hilos_all"], 'Err_create':resp["error"]})
+                detalle = resp.get("detail", "")
+                print("Error creando un hilo . Error:", resp["error"], detalle)
+                err_msg = resp["error"] if not detalle else f"{resp['error']}: {detalle}"
+                return render(request, "mod_hilo.html",{'Hilos':request.session["hilos_all"], 'Err_create': err_msg})
         else:
             hilo = request.POST.get('hilo')
             print("DEBUG DELETE uid =", request.session["hilos_all"])
