@@ -47,7 +47,7 @@ services:
           - api-utfsm.kroder.dev
         paths:
           - /threads
-        strip_path: true
+        strip_path: false
         path_handling: v0
         tags:
           - edge
