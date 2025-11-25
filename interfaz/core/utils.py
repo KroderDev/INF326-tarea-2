@@ -6,8 +6,8 @@ from typing import Tuple, Dict, Any, Optional, List
 
 NOMBRE_JSON = r"mapChatsHilos.json"
 
-API_GATEWAY_URL = os.getenv("API_GATEWAY_URL", "https://api-utfsm.kroder.dev").rstrip("/")
-API_GATEWAY_ALT_URL = os.getenv("API_GATEWAY_ALT_URL", "https://api-group04.inf326.nursoft.dev").rstrip("/")
+API_GATEWAY_URL = os.getenv("API_GATEWAY_URL", "https://api-grupo04.inf326.nursoft.dev").rstrip("/")
+API_GATEWAY_ALT_URL = os.getenv("API_GATEWAY_ALT_URL", "https://api-utfsm.kroder.dev").rstrip("/")
 GATEWAY_BASES = [u for u in dict.fromkeys([API_GATEWAY_URL, API_GATEWAY_ALT_URL]) if u]
 GATEWAY_BASE = GATEWAY_BASES[0] if GATEWAY_BASES else ""
 
@@ -33,11 +33,6 @@ CHATBOT_ENDPOINTS = {
         "request_key": "message",
         "response_keys": ("reply", "message", "result"),
     },
-    "calculo": {
-        "path": "/chatbot-calculo/chat",
-        "request_key": "message",
-        "response_keys": ("reply", "message", "result"),
-    },
     "wikipedia": {
         "path": "/chatbot-wikipedia/chat-wikipedia",
         "request_key": "message",
@@ -53,7 +48,6 @@ CHATBOT_ENDPOINTS = {
 CHATBOT_OPTIONS = [
     ("academico", "Chatbot Academico"),
     ("utilidad", "Chatbot Utilidad"),
-    ("calculo", "Chatbot Calculo"),
     ("wikipedia", "Chatbot Wikipedia"),
     ("programacion", "Chatbot Programacion"),
 ]
@@ -730,7 +724,7 @@ def GetHilosAPI(channel_id: str):
     Llama a la API GET /channel/get_threads y retorna
     una lista de tuplas (thread_id, title).
     """
-    url = f"{URLS['hilos']}/threads/channel/get_threads"
+    url = f"{URLS['hilos']}/channel/get_threads"
     params = {"channel_id": channel_id}
 
     try:
@@ -777,7 +771,7 @@ def get_channel_threads(channel_id: str):
     Obtiene todos los hilos asociados a un canal específico mediante GET.
     """
     # Construcción de la URL según la documentación: /channel/get_threads
-    url = f"{URLS['hilos']}/threads/channel/get_threads"
+    url = f"{URLS['hilos']}/channel/get_threads"
     
     # Los parámetros Query (?channel_id=...) se pasan en el diccionario 'params'
     params = {
@@ -913,7 +907,7 @@ def edit_thread(thread_id: str, title: str, metadata: Optional[Dict[str, Any]] =
     Requiere thread_id, title y opcionalmente metadata.
     """
     # Construcción de la URL según la documentación: /threads/{thread_id}/edit
-    url = f"{URLS['hilos']}/threads/threads/{thread_id}/edit"
+    url = f"{URLS['hilos']}/{thread_id}/edit"
     
     # Si no envían metadata, iniciamos un diccionario vacío para cumplir con el esquema
     if metadata is None:
@@ -949,7 +943,7 @@ def edit_thread(thread_id: str, title: str, metadata: Optional[Dict[str, Any]] =
     return True, data
 
 def delete_thread(thread_id: str):
-    url = f"{URLS['hilos']}/threads/threads/{thread_id}"
+    url = f"{URLS['hilos']}/{thread_id}"
     try:
         resp = requests.delete(url, timeout=10)
     except requests.RequestException as e:
@@ -987,7 +981,7 @@ def delete_thread(thread_id: str):
 """
 
 def create_thread(channel_id: str, thread_name: str, user_id: str):
-    url = f"{URLS['hilos']}/threads/threads/"
+    url = f"{URLS['hilos']}/"
     print(url)
     params = {
         "channel_id": channel_id,
@@ -1028,6 +1022,11 @@ def API_CB(tipo, texto):
             response = requests.post(url, json=payload, timeout=12)
         except requests.exceptions.RequestException as exc:
             errores.append(f"{base or 'sin_base'}: {exc}")
+            continue
+
+        # Saltar respuestas HTML (normalmente indican ruta errónea)
+        if "text/html" in response.headers.get("content-type", ""):
+            errores.append(f"{base or 'sin_base'}: respuesta HTML")
             continue
 
         try:

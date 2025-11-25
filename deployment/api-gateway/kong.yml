@@ -37,7 +37,7 @@ services:
           - channels
 
   - name: threads-service
-    host: threads-service.default.svc.cluster.local
+    host: threads-api-service.default.svc.cluster.local
     port: 80
     protocol: http
     routes:
@@ -166,23 +166,6 @@ services:
           - api-utfsm.kroder.dev
         paths:
           - /chatbot-utilidad
-        strip_path: true
-        path_handling: v0
-        tags:
-          - edge
-          - chatbot
-
-  - name: chatbot-calculo-service
-    host: api-gateway-service.calculadora.svc.cluster.local
-    port: 5000
-    protocol: http
-    routes:
-      - name: chatbot-calculo-api
-        hosts:
-          - api-grupo04.inf326.nursoft.dev
-          - api-utfsm.kroder.dev
-        paths:
-          - /chatbot-calculo
         strip_path: true
         path_handling: v0
         tags:

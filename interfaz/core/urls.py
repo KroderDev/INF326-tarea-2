@@ -14,7 +14,6 @@ urlpatterns = [
     path("log_out/", views.log_out, name="log_out"),
     path("CB_academico/", lambda r: views.chatbot_view(r, "academico"), name="CB_academico"),
     path("CB_utilidad/", lambda r: views.chatbot_view(r, "utilidad"), name="CB_utilidad"),
-    path("CB_calculo/", lambda r: views.chatbot_view(r, "calculo"), name="CB_calculo"),
     path("CB_wikipedia/", lambda r: views.chatbot_view(r, "wikipedia"), name="CB_wikipedia"),
     path("CB_programacion/", lambda r: views.chatbot_view(r, "programacion"), name="CB_programacion"),
 
